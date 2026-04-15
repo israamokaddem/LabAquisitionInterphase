@@ -1,12 +1,16 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHBoxLayout, QPushButton, QComboBox, QLineEdit,
-                             QLabel, QFormLayout, QFrame, QCheckBox, QButtonGroup, QRadioButton, QFileDialog)
+                             QLabel, QFormLayout, QFrame, QCheckBox, QButtonGroup, QRadioButton, QFileDialog,
+                             QMessageBox)
+
+from Interpretation.Moteur import decomposition
 
 
 class LaboInterface(QMainWindow):
-    def __init__(self, data_columns):
+    def __init__(self):
         # On définit la config avant super() pour être sûr qu'elle existe
+        self.layout_chks = None
         self.param = None
         self.CONFIG_PARAMETRES = {
             "Decomposition1": ["ProbeSpacing", "Depth", "Gain"],
@@ -20,10 +24,11 @@ class LaboInterface(QMainWindow):
         # Initialisation de tes variables
         self.check_list = []
         self.champs = {}  # Dictionnaire pour stocker les QLineEdit du formulaire
-        self.data_columns = data_columns
+        self.data_columns =[]
         self.irreg_true = None
         self.irreg_false = None
-        
+        self.method_selected="menu1"
+        self.fichier=None
 
         self.setWindowTitle("Interface de Traitement de Données")
         self.resize(800, 600)
@@ -64,7 +69,7 @@ class LaboInterface(QMainWindow):
         layout_fichier.addWidget(self.btn_valider)
         self.main_layout.addLayout(layout_fichier)
 
-        self.layout_columns()
+
 
         self.form_layout = QFormLayout()
         self.main_layout.addLayout(self.form_layout)
@@ -79,12 +84,18 @@ class LaboInterface(QMainWindow):
         self.btn_entree = QPushButton("EXÉCUTER LE TRAITEMENT")
         self.btn_entree.setFixedHeight(50)
         self.main_layout.addWidget(self.btn_entree)
-
+        self.btn_entree.clicked.connect(self.lancer_calcul_final)
         container = QWidget()
         container.setLayout(self.main_layout)
         self.setCentralWidget(container)
 
     def layout_columns(self):
+        # 1. On nettoie le layout (on enlève les anciennes colonnes s'il y en a)
+        while self.layout_chks.count():
+            item = self.layout_chks.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+          
         layout_columns = QHBoxLayout()
         self.check_list = []
         # split permet de transformer ta string de test en vraie liste si besoin
@@ -102,9 +113,10 @@ class LaboInterface(QMainWindow):
             if child.widget():
                 child.widget().deleteLater()
 
+
         # 2. Récupération des attributs
         attributs = self.CONFIG_PARAMETRES.get(choix_menu, [])
-
+        self.method_selected = choix_menu
         # 3. Création des champs
         self.champs = {}  # On vide le dico pour la nouvelle sélection
         for nom in attributs:
@@ -130,20 +142,89 @@ class LaboInterface(QMainWindow):
 
         self.main_layout.addLayout(layout_Irregular)
 
+
     def parcourir_fichier(self):
+        import pandas as pd
         # QFileDialog.getOpenFileName(parent, titre, dossier_par_defaut, filtre)
-        fichier, _ = QFileDialog.getOpenFileName(self,
-            "Sélectionner le fichier CSV",
-            "",
-            "Fichiers CSV (*.csv)"
-        )
+        self.fichier, _ = QFileDialog.getOpenFileName(self,
+                                                      "Sélectionner le fichier CSV",
+                                                      "",
+                                                      "Fichiers CSV (*.csv)"
+                                                      )
         # Si l'utilisateur a choisi un fichier
-        if fichier:
-            self.input_fichier.setText(fichier)
+        if self.fichier:
+            self.input_fichier.setText(self.fichier)
+
+            try:
+                # 1. On lit uniquement la première ligne (l'en-tête) du fichier
+                columns_title = pd.read_csv(self.fichier, nrows=0)
+
+                # 2. On initialise data_columns avec la liste des noms de colonnes
+                self.data_columns = columns_title.columns.tolist()
+
+                # 3. On appelle ta méthode existante pour mettre à jour l'affichage
+                self.layout_columns()
+
+            except Exception as e:
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.critical(self, "Erreur", f"Impossible de lire les colonnes du fichier : {e}")
+
+
+
+
+
+    def lancer_calcul_final(self):
+        import pandas as pd
+        from Interpretation.Moteur.decomposition import Decomposition
+
+        # 1. Vérification du fichier d'entree
+        if not self.fichier:
+            QMessageBox.critical(self, "Erreur", "Veuillez sélectionner un fichier CSV.")
+            return
+
+        # 2. Extraction et vérification des paramètres numériques du formulaire
+        params = {}
+        for nom, widget in self.champs.items():
+            try:
+                params[nom] = float(widget.text())
+            except ValueError:
+                QMessageBox.critical(self, "Erreur", f"Le champ '{nom}' est invalide.")
+                return
+
+        # 3. Récupération des colonnes sélectionnées (Checkboxes)
+        selected_columns = [cb.text() for cb in self.check_list if cb.isChecked()]
+        if not selected_columns:
+            QMessageBox.warning(self, "Attention", "Veuillez sélectionner au moins une sonde.")
+            return
+
+        # 4. Chargement des données et instanciation de la classe Decomposition
+        try:
+            data = pd.read_csv(self.fichier)
+
+            # On crée l'objet en passant les arguments attendus par ton __init__
+            # Note: J'utilise .get() pour éviter les erreurs si la clé n'existe pas dans le formulaire
+            obj = Decomposition(
+                data=data,
+                ProbeSpacing=params.get("ProbeSpacing"),
+                depth=params.get("Depth", 2.0),  # Valeur par défaut si absent
+                Irreg=self.irreg_true.isChecked()
+            )
+
+            # 5. Appel de la méthode spécifique
+            # Ici on teste directement WaveProbeDecomposition
+            if self.method_selected == "Decomposition1":
+                ai, ar = obj.WaveProbeDecomposition(selected_columns)
+                QMessageBox.information(self, "Résultat", f"Incident (Ai): {ai:.4f}\nRéfléchi (Ar): {ar:.4f}")
+            else:
+                QMessageBox.information(self, "Info", f"La méthode {self.method_selected} n'est pas encore liée.")
+
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur de calcul", f"Détails : {str(e)}")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     # Test avec une liste de colonnes
-    window = LaboInterface(["Température", "Pression", "Vitesse"])
+    window = LaboInterface()
     window.show()
     sys.exit(app.exec())

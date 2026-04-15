@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a8e2ff60-3c2d-47db-a1b2-8a74b47ad281" name="Changes" comment="Interphase.python:creation d'une maquette de l'interphase graphique.">
-      <change afterPath="$PROJECT_DIR$/Tests/InterphaseTest.py" afterDir="false" />
+    <list default="true" id="a8e2ff60-3c2d-47db-a1b2-8a74b47ad281" name="Changes" comment="interphase created and tested V1">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Interpretation/Moteur/decomposition.py" beforeDir="false" afterPath="$PROJECT_DIR$/Interpretation/Moteur/decomposition.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Interpretation/interface.py" beforeDir="false" afterPath="$PROJECT_DIR$/Interpretation/interface.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -23,8 +21,25 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="master" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "israamokaddem"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/israamokaddem/LabAquisitionInterphase.git",
+    "accountId": "db44d052-fa60-42d7-b6ad-3c70662dd103"
+  }
+}]]></component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
   </component>
@@ -46,7 +61,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "IsraDev",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -69,7 +84,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1776072375902</updated>
-      <workItem from="1776072376868" duration="38180000" />
+      <workItem from="1776072376868" duration="46030000" />
     </task>
     <task id="LOCAL-00001" summary="Interphase.python:creation d'une maquette de l'interphase graphique.">
       <option name="closed" value="true" />
@@ -79,7 +94,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776175723919</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="interphase created and tested V1">
+      <option name="closed" value="true" />
+      <created>1776255755323</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1776255755323</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -87,7 +110,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Interphase.python:creation d'une maquette de l'interphase graphique." />
-    <option name="LAST_COMMIT_MESSAGE" value="Interphase.python:creation d'une maquette de l'interphase graphique." />
+    <MESSAGE value="interphase created and tested V1" />
+    <option name="LAST_COMMIT_MESSAGE" value="interphase created and tested V1" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -102,6 +126,6 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Interpahse_Aquisition$InterphaseTest.coverage" NAME="InterphaseTest Coverage Results" MODIFIED="1776244577824" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Tests" />
-    <SUITE FILE_PATH="coverage/Interpahse_Aquisition$interface.coverage" NAME="interface Coverage Results" MODIFIED="1776255238299" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation" />
+    <SUITE FILE_PATH="coverage/Interpahse_Aquisition$interface.coverage" NAME="interface Coverage Results" MODIFIED="1776263339007" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation" />
   </component>
 </project>
