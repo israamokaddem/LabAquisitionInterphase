@@ -27,7 +27,7 @@ from scipy.optimize import newton
 
 
 class Decomposition:
-    def __init__(self, data, ProbeSpacing, depth, g=9.81, Irreg=False ):
+    def __init__(self, data, ProbeSpacing=None, depth=2, g=9.81, Irreg=False):
         """
         Constructeur de la classe de traitement.
 
@@ -37,6 +37,8 @@ class Decomposition:
         :param g: Constante de gravité (par défaut 9.81).
         """
         # 1. Stockage des paramètres de base
+        if ProbeSpacing is None:
+            ProbeSpacing = [1, 2, 0.5, 10]
         self.data = data
         self.depth = depth
         self.g = g
@@ -44,6 +46,7 @@ class Decomposition:
         # 2. On s'assure que spacing est un array NumPy (plus rapide pour les calculs)
         self.ProbeSpacing = np.array(ProbeSpacing)
         self.Irreg= Irreg
+        self.variables = ["ProbeSpacing", "Depth", "Gain"]
 
     def RelationDisp(self, omega, tolerence):
         """
