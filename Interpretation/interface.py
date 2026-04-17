@@ -10,12 +10,12 @@ from Interpretation.Moteur import decomposition
 class LaboInterface(QMainWindow):
     def __init__(self):
         # On définit la config avant super() pour être sûr qu'elle existe
-        self.layout_chks = None
+        self.layout_chks = QHBoxLayout()
         self.param = None
         self.CONFIG_PARAMETRES = {
-            "Decomposition1": ["ProbeSpacing", "Depth", "Gain"],
-            "Decomposition2": ["Frequency", "Amplitude", "Offset"],
-            "Decomposition3": ["Seuil_Min", "Seuil_Max"],
+            "WaveProbeDecomposition": ["ProbeSpacing", "Depth", "Gain","StartCutIndex"],  #on definit pout chaque methode les parametres
+            "Decomposition_LiuHuang": ["ProbeSpacing", "Depth", "Gain","omega","order"],
+            "Decomposition_EldrupAnderson": ["ProbeSpacing", "Depth", "Gain","omega","order"],
             "Dsp1": ["Window_Size", "Overlap"],
             "Image1": ["Contrast", "Brightness", "Zoom"]
         }
@@ -28,23 +28,24 @@ class LaboInterface(QMainWindow):
         self.irreg_true = None
         self.irreg_false = None
         self.method_selected="menu1"
-        self.fichier=None
+
 
         self.setWindowTitle("Interface de Traitement de Données")
         self.resize(800, 600)
 
         self.main_layout = QVBoxLayout()
         self.main_layout.setSpacing(10)
+        self.main_layout.addLayout(self.layout_chks)
 
         # ZONE HAUT
         layout_haut = QHBoxLayout()
         self.menu1 = QComboBox()
-        self.menu1.addItems(["Decomposition1", "Decomposition2", "Decomposition3"])
+        self.menu1.addItems(["WaveProbeDecomposition", "Decomposition_EldrupAnderson", "Decomposition_LiuHuang"])
         self.menu1.currentTextChanged.connect(self.update_form)
 
         self.menu2 = QComboBox()
         self.menu2.addItems(["Dsp1", "Dsp2", "Dsp3"])
-        # Optionnel : connecter aussi menu2 et menu3 si tu veux qu'ils changent le formulaire
+        # Optionnel : connecter aussi menu2 et menu3 si je veux qu'ils changent le formulaire
         self.menu2.currentTextChanged.connect(self.update_form)
         self.menu3 = QComboBox()
         self.menu3.addItems(["Image1", "Image2", "Image3"])
@@ -95,16 +96,24 @@ class LaboInterface(QMainWindow):
             item = self.layout_chks.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-          
-        layout_columns = QHBoxLayout()
+
+
+       #on cree le layout des colonnes
         self.check_list = []
-        # split permet de transformer ta string de test en vraie liste si besoin
+        # split permet de transformer la string de test en vraie liste si besoin
         cols = self.data_columns.split(",") if isinstance(self.data_columns, str) else self.data_columns
         for name in cols:
-            btn = QCheckBox(name.strip())
-            layout_columns.addWidget(btn)
-            self.check_list.append(btn)
-        self.main_layout.addLayout(layout_columns)
+            if (name.strip().lower() == "time"):
+                btn = QCheckBox(name.strip())
+                self.layout_chks.addWidget(btn)
+                btn.setChecked(True)  # On le coche par défaut
+                btn.setEnabled(False)
+            else:
+                btn = QCheckBox(name.strip())
+                self.layout_chks.addWidget(btn)
+                self.check_list.append(btn)
+
+        self.main_layout.addLayout(self.layout_chks)
 
     def update_form(self, choix_menu):
         # 1. Nettoyage
@@ -184,9 +193,20 @@ class LaboInterface(QMainWindow):
 
         # 2. Extraction et vérification des paramètres numériques du formulaire
         params = {}
+
         for nom, widget in self.champs.items():
+            valeur_texte = widget.text().strip()
             try:
-                params[nom] = float(widget.text())
+                if nom == "ProbeSpacing":
+                    # On transforme la chaîne "1, 2, 3" en liste de floats [1.0, 2.0, 3.0]
+                    # On sépare par virgule, on nettoie les espaces et on convertit
+                    params[nom] = [float(x) for x in valeur_texte.split(",") if x.strip()]
+                elif nom == "StartCutIndex":
+                    # ON FORCE L'ENTIER ICI
+                    params[nom] = int(float(valeur_texte))
+                else:
+                    # Pour les autres champs, on reste sur un float unique
+                    params[nom] = float(valeur_texte)
             except ValueError:
                 QMessageBox.critical(self, "Erreur", f"Le champ '{nom}' est invalide.")
                 return
@@ -199,8 +219,10 @@ class LaboInterface(QMainWindow):
 
         # 4. Chargement des données et instanciation de la classe Decomposition
         try:
-            data = pd.read_csv(self.fichier)
-
+            data_full = pd.read_csv(self.fichier)
+            col_temps = data_full.columns[0]
+            data = data_full[[col_temps] + selected_columns]
+            print(f"Colonnes envoyées : {selected_columns}")
             # On crée l'objet en passant les arguments attendus par ton __init__
             # Note: J'utilise .get() pour éviter les erreurs si la clé n'existe pas dans le formulaire
             obj = Decomposition(
@@ -210,10 +232,11 @@ class LaboInterface(QMainWindow):
                 Irreg=self.irreg_true.isChecked()
             )
 
+
             # 5. Appel de la méthode spécifique
             # Ici on teste directement WaveProbeDecomposition
-            if self.method_selected == "Decomposition1":
-                ai, ar = obj.WaveProbeDecomposition(selected_columns)
+            if self.method_selected == "WaveProbeDecomposition":
+                ai, ar = obj.WaveProbeDecomposition(selected_columns,params.get("StartCutIndex"))
                 QMessageBox.information(self, "Résultat", f"Incident (Ai): {ai:.4f}\nRéfléchi (Ar): {ar:.4f}")
             else:
                 QMessageBox.information(self, "Info", f"La méthode {self.method_selected} n'est pas encore liée.")
