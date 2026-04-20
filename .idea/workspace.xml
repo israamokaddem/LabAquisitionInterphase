@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a8e2ff60-3c2d-47db-a1b2-8a74b47ad281" name="Changes" comment="interphase created with bugs V2">
+    <list default="true" id="a8e2ff60-3c2d-47db-a1b2-8a74b47ad281" name="Changes" comment="Interphase V0 :fonctionnelle pour methode WaveProb">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Interpretation/Moteur/decomposition.py" beforeDir="false" afterPath="$PROJECT_DIR$/Interpretation/Moteur/decomposition.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Interpretation/interface.py" beforeDir="false" afterPath="$PROJECT_DIR$/Interpretation/interface.py" afterDir="false" />
@@ -22,6 +22,12 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="PUSH_TAGS">
+      <GitPushTagMode>
+        <option name="argument" value="--follow-tags" />
+        <option name="title" value="Current Branch" />
+      </GitPushTagMode>
+    </option>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
         <entry key="$PROJECT_DIR$" value="master" />
@@ -29,50 +35,51 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "israamokaddem"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;israamokaddem&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/israamokaddem/LabAquisitionInterphase.git",
-    "accountId": "db44d052-fa60-42d7-b6ad-3c70662dd103"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/israamokaddem/LabAquisitionInterphase.git&quot;,
+    &quot;accountId&quot;: &quot;db44d052-fa60-42d7-b6ad-3c70662dd103&quot;
   }
-}]]></component>
+}</component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 8,
-  "fromUser": false
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8,
+  &quot;fromUser&quot;: false
+}</component>
   <component name="ProjectId" id="3CIU36PM9SryKJrFiwFVDFvzusF" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.InterphaseTest.executor": "Run",
-    "Python.decomposition.executor": "Run",
-    "Python.interface.executor": "Run",
-    "Python.waveAmplitudeDecomposition.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "IsraDev",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.InterphaseTest.executor&quot;: &quot;Run&quot;,
+    &quot;Python.decomposition.executor&quot;: &quot;Run&quot;,
+    &quot;Python.interface.executor&quot;: &quot;Run&quot;,
+    &quot;Python.waveAmplitudeDecomposition.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;IsraDev&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -87,7 +94,11 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1776072375902</updated>
-      <workItem from="1776072376868" duration="80115000" />
+      <workItem from="1776072376868" duration="84062000" />
+      <workItem from="1776677253993" duration="548000" />
+      <workItem from="1776677825029" duration="401000" />
+      <workItem from="1776678806118" duration="497000" />
+      <workItem from="1776685681961" duration="4031000" />
     </task>
     <task id="LOCAL-00001" summary="Interphase.python:creation d'une maquette de l'interphase graphique.">
       <option name="closed" value="true" />
@@ -113,7 +124,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776263448096</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Interphase V0 :fonctionnelle pour methode WaveProb">
+      <option name="closed" value="true" />
+      <created>1776418645055</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1776418645056</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -134,7 +153,8 @@
     <MESSAGE value="Interphase.python:creation d'une maquette de l'interphase graphique." />
     <MESSAGE value="interphase created and tested V1" />
     <MESSAGE value="interphase created with bugs V2" />
-    <option name="LAST_COMMIT_MESSAGE" value="interphase created with bugs V2" />
+    <MESSAGE value="Interphase V0 :fonctionnelle pour methode WaveProb" />
+    <option name="LAST_COMMIT_MESSAGE" value="Interphase V0 :fonctionnelle pour methode WaveProb" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -173,9 +193,11 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Interpahse_Aquisition$decomposition.coverage" NAME="decomposition Coverage Results" MODIFIED="1776416551299" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
+    <SUITE FILE_PATH="coverage/interface_py$interface.coverage" NAME="interface Coverage Results" MODIFIED="1776693378586" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation" />
+    <SUITE FILE_PATH="coverage/Interpahse_Aquisition$decomposition.coverage" NAME="decomposition Coverage Results" MODIFIED="1776675377791" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
     <SUITE FILE_PATH="coverage/Interpahse_Aquisition$waveAmplitudeDecomposition.coverage" NAME="waveAmplitudeDecomposition Coverage Results" MODIFIED="1776401759374" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="D:/HP" />
     <SUITE FILE_PATH="coverage/Interpahse_Aquisition$InterphaseTest.coverage" NAME="InterphaseTest Coverage Results" MODIFIED="1776244577824" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Tests" />
-    <SUITE FILE_PATH="coverage/Interpahse_Aquisition$interface.coverage" NAME="interface Coverage Results" MODIFIED="1776418145837" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation" />
+    <SUITE FILE_PATH="coverage/interface_py$decomposition.coverage" NAME="decomposition Coverage Results" MODIFIED="1776690274256" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
+    <SUITE FILE_PATH="coverage/Interpahse_Aquisition$interface.coverage" NAME="interface Coverage Results" MODIFIED="1776674684394" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation" />
   </component>
 </project>

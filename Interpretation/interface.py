@@ -1,3 +1,4 @@
+import pyqtgraph as pg
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHBoxLayout, QPushButton, QComboBox, QLineEdit,
@@ -103,7 +104,7 @@ class LaboInterface(QMainWindow):
         # split permet de transformer la string de test en vraie liste si besoin
         cols = self.data_columns.split(",") if isinstance(self.data_columns, str) else self.data_columns
         for name in cols:
-            if (name.strip().lower() == "time"):
+            if ('t' in name.strip().lower()):
                 btn = QCheckBox(name.strip())
                 self.layout_chks.addWidget(btn)
                 btn.setChecked(True)  # On le coche par défaut
@@ -243,6 +244,7 @@ class LaboInterface(QMainWindow):
 
         except Exception as e:
             QMessageBox.critical(self, "Erreur de calcul", f"Détails : {str(e)}")
+
 
 
 if __name__ == "__main__":
