@@ -262,8 +262,33 @@ class LaboInterface(QMainWindow):
             if self.method_selected == "WaveProbeDecomposition":
                 ai, ar = obj.WaveProbeDecomposition(selected_columns,params.get("StartCutIndex"))
                 QMessageBox.information(self, "Résultat", f"Incident (Ai): {ai:.4f}\nRéfléchi (Ar): {ar:.4f}")
+            elif self.method_selected == "Decomposition_LiuHuang":
+                # Récupération de omega et order (valeurs par défaut si vides)
+                om = params.get("omega", 1.0)
+                ord_val = int(params.get("order", 2))
+
+                ai1, ar1, aib, arb, aif, arf = obj.Decomposition_LiuHuang(selected_columns, om, ord_val)
+
+                msg = (f"Méthode : Liu & Huang (Ordre {ord_val})\n\n"
+                       f"1er Ordre - Inc (Ai1): {ai1:.4f} / Réf (Ar1): {ar1:.4f}\n"
+                       f"Lié (Bound) - Inc: {aib:.4f} / Réf: {arb:.4f}\n"
+                       f"Libre (Free) - Inc: {aif:.4f} / Réf: {arf:.4f}")
+                QMessageBox.information(self, "Résultat", msg)
+
+            elif self.method_selected == "Decomposition_EldrupAnderson":
+                om = params.get("omega", 1.0)
+                ord_val = int(params.get("order", 2))
+
+                ai1, ar1, aib, arb, aif, arf = obj.Decomposition_EldrupAnderson(selected_columns, om, ord_val)
+
+                msg = (f"Méthode : Eldrup & Anderson (Non-linéaire)\n\n"
+                       f"1er Ordre - Inc: {ai1:.4f} / Réf: {ar1:.4f}\n"
+                       f"Lié (Bound) - Inc: {aib:.4f} / Réf: {arb:.4f}")
+                QMessageBox.information(self, "Résultat", msg)
+
             else:
-                QMessageBox.information(self, "Info", f"La méthode {self.method_selected} n'est pas encore liée.")
+                QMessageBox.information(self, "Info", f"La méthode {self.method_selected} est reconnue mais le traitement spécifique n'est pas codé.")
+
 
         except Exception as e:
             QMessageBox.critical(self, "Erreur de calcul", f"Détails : {str(e)}")

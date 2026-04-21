@@ -337,7 +337,7 @@ class Decomposition:
 
         print('lambda :', (2 * np.pi / k), ' , lambda nf : ', (2 * np.pi / k_n), ' , lambda nb : ',
               (2 * np.pi / (k * n)))
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(self.variables)):
             CI_1.append(np.exp(-1j * k * self.ProbeSpacing[m]) / 2)
             CR_1.append(np.exp(1j * k * self.ProbeSpacing[m]) / 2)
             CIB_n.append(np.exp(-1j * k * n * self.ProbeSpacing[m]) / 2)
@@ -348,7 +348,7 @@ class Decomposition:
         # 1er ordre
 
         A11, A12, A21, A22, B1, B2 = 0, 0, 0, 0, 0, 0
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(self.variables)):
             A11 += CI_1[m] ** 2
             A12 += CI_1[m] * CR_1[m]
             A22 += CR_1[m] ** 2
@@ -366,7 +366,7 @@ class Decomposition:
         # 2eme ordre
 
         A11, A12, A13, A14, A21, A22, A23, A24, A31, A32, A33, A34, A41, A42, A43, A44, B1, B2, B3, B4 = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(self.variables)):
             A11 += CIB_n[m] ** 2
             A12 += CRB_n[m] * CIB_n[m]
             A13 += CIF_n[m] * CIB_n[m]
@@ -440,7 +440,7 @@ class Decomposition:
         # STEP 2.1 : Intial value calculation
 
         CI_1, CR_1, CIB_n, CIF_n, CRB_n, CRF_n = [], [], [], [], [], []
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(selected_columns)):
             CI_1.append(np.exp(-1j * k_i * self.ProbeSpacing[m]) / 2)
             CR_1.append(np.exp(1j * k_r * self.ProbeSpacing[m]) / 2)
             CIB_n.append(np.exp(-1j * k_i * n * self.ProbeSpacing[m]) / 2)
@@ -450,7 +450,7 @@ class Decomposition:
 
         # 1er ordre
         A11, A12, A21, A22, B1, B2 = 0, 0, 0, 0, 0, 0
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(selected_columns)):
             A11 += CI_1[m] ** 2
             A12 += CI_1[m] * CR_1[m]
             A22 += CR_1[m] ** 2
@@ -468,7 +468,7 @@ class Decomposition:
         # 2eme ordre
 
         A11, A12, A13, A14, A21, A22, A23, A24, A31, A32, A33, A34, A41, A42, A43, A44, B1, B2, B3, B4 = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(selected_columns)):
             A11 += CIB_n[m] ** 2
             A12 += CRB_n[m] * CIB_n[m]
             A13 += CIF_n[m] * CIB_n[m]
@@ -508,7 +508,7 @@ class Decomposition:
         while eps >= 0.00001:  # for j in range(3):
             Ai_init = (Ai_1 + AiB_n)  # parametre de reference pour la tolerance
             CI_1, CR_1, CIB_n, CIF_n, CRB_n, CRF_n = [], [], [], [], [], []
-            for m in range(len(self.ProbeSpacing)):
+            for m in range(len(selected_columns)):
                 CI_1.append(np.exp(-1j * k_i * self.ProbeSpacing[m]) / 2)
                 CR_1.append(np.exp(1j * k_r * self.ProbeSpacing[m]) / 2)
                 CIB_n.append(np.exp(-1j * k_i * n * self.ProbeSpacing[m]) / 2)
@@ -518,7 +518,7 @@ class Decomposition:
 
             # 1er ordre
             A11, A12, A21, A22, B1, B2 = 0, 0, 0, 0, 0, 0
-            for m in range(len(self.ProbeSpacing)):
+            for m in range(len(selected_columns)):
                 A11 += CI_1[m] ** 2
                 A12 += CI_1[m] * CR_1[m]
                 A22 += CR_1[m] ** 2
@@ -537,7 +537,7 @@ class Decomposition:
 
             A11, A12, A13, A14, A21, A22, A23, A24, A31, A32, A33, A34, A41, A42, A43, A44, B1, B2, B3, B4 = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-            for m in range(len(self.ProbeSpacing)):
+            for m in range(len(selected_columnsl)):
                 A11 += CIB_n[m] ** 2
                 A12 += CRB_n[m] * CIB_n[m]
                 A13 += CIF_n[m] * CIB_n[m]
