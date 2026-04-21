@@ -6,7 +6,8 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QMessageBox)
 
 from Interpretation.Moteur import decomposition
-
+import pandas as pd
+import numpy as np
 
 class LaboInterface(QMainWindow):
     def __init__(self):
@@ -29,7 +30,8 @@ class LaboInterface(QMainWindow):
         self.irreg_true = None
         self.irreg_false = None
         self.method_selected="menu1"
-
+        self.data=None
+        self.legend_object = None
 
         self.setWindowTitle("Interface de Traitement de Données")
         self.resize(800, 600)
@@ -37,6 +39,15 @@ class LaboInterface(QMainWindow):
         self.main_layout = QVBoxLayout()
         self.main_layout.setSpacing(10)
         self.main_layout.addLayout(self.layout_chks)
+
+        # --- AJOUT DU WIDGET GRAPHIQUE (Obligatoire pour afficher) ---
+        self.graphWidget = pg.PlotWidget()
+        self.graphWidget.setBackground('w')
+        self.main_layout.addWidget(self.graphWidget)
+
+        # --- AJOUT DU LAYOUT POUR L'ÉCHELLE ---
+        self.layout_legende = QHBoxLayout()
+        self.main_layout.addLayout(self.layout_legende)
 
         # ZONE HAUT
         layout_haut = QHBoxLayout()
@@ -80,6 +91,17 @@ class LaboInterface(QMainWindow):
         self.update_form(self.menu1.currentText())
 
         self.irregular()
+
+
+
+        #bouton de generation de graphe pour voir le resultat des sondes
+        layout_VueSondes=QHBoxLayout()
+        self.btn_vueSonde=QPushButton("afficher sondes ")
+        self.btn_vueSonde.clicked.connect(self.action_afficher_graphique)
+        layout_VueSondes.addWidget(self.btn_vueSonde)
+        self.main_layout.addLayout(layout_VueSondes)
+
+
 
         # ZONE BAS
         self.main_layout.addStretch()
@@ -167,10 +189,11 @@ class LaboInterface(QMainWindow):
 
             try:
                 # 1. On lit uniquement la première ligne (l'en-tête) du fichier
-                columns_title = pd.read_csv(self.fichier, nrows=0)
+                self.data = pd.read_csv(self.fichier)
+
 
                 # 2. On initialise data_columns avec la liste des noms de colonnes
-                self.data_columns = columns_title.columns.tolist()
+                self.data_columns =self.data.columns.tolist()
 
                 # 3. On appelle ta méthode existante pour mettre à jour l'affichage
                 self.layout_columns()
@@ -244,6 +267,61 @@ class LaboInterface(QMainWindow):
 
         except Exception as e:
             QMessageBox.critical(self, "Erreur de calcul", f"Détails : {str(e)}")
+
+    import pyqtgraph as pg
+    import pandas as pd
+    import numpy as np
+
+    def show_graph(self, donnees, titre="Graphique"):
+        """
+        Méthode centrale pour afficher des données.
+        donnees : peut être un DataFrame Pandas ou un dictionnaire de listes.
+        """
+        # On efface tout avant d'afficher
+        self.graphWidget.clear()
+        if hasattr(self, 'legend_object') and self.legend_object is not None:
+            # On retire l'objet du graphique
+            self.graphWidget.removeItem(self.legend_object)
+            self.legend_object = None
+
+        self.graphWidget.setTitle(titre)
+        self.legend_object = self.graphWidget.addLegend(offset=(30, 30))
+
+        # Nettoyage du layout de l'échelle en bas
+        while self.layout_legende.count():
+            item = self.layout_legende.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # Définition de couleurs standards
+        colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
+
+        # CAS 1 : Si c'est un DataFrame Pandas
+        if isinstance(donnees, pd.DataFrame):
+            # On cherche une colonne 'Time' ou 't', sinon on utilise l'index
+            x_axis = donnees['Time'] if 'Time' in donnees.columns else donnees.index
+            sondes=[cb.text() for cb in self.check_list if cb.isChecked()]
+            for i, col in enumerate(sondes):
+                color = colors[i % len(colors)]
+                pen = pg.mkPen(color=color, width=2)
+                self.graphWidget.plot(x_axis, donnees[col], pen=pen,name=col)
+                # Échelle en dessous
+                lbl_color = QFrame()
+                lbl_color.setFixedSize(10, 10)
+                lbl_color.setStyleSheet(f"background-color: {color};")
+                lbl_txt = QLabel(col)
+                self.layout_legende.addWidget(lbl_color)
+                self.layout_legende.addWidget(lbl_txt)
+            self.layout_legende.addStretch()
+
+        # CAS 2 : Si c'est une simple liste ou un array (ex: un résultat de calcul)
+        elif isinstance(donnees, (list, np.ndarray)):
+            pen = pg.mkPen(color='w', width=2)
+            self.graphWidget.plot(donnees, pen=pen, name="Résultat")
+
+    def action_afficher_graphique(self):
+        # On appelle ta méthode show_graph en utilisant l'attribut de classe
+        self.show_graph(self.data)
 
 
 
