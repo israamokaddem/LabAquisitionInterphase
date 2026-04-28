@@ -3,26 +3,30 @@ import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHBoxLayout, QPushButton, QComboBox, QLineEdit,
                              QLabel, QFormLayout, QFrame, QCheckBox, QButtonGroup, QRadioButton, QFileDialog,
-                             QMessageBox)
+                             QMessageBox, QGroupBox, QScrollArea)
+from matplotlib import container
 
 from Interpretation.Moteur import decomposition
 import pandas as pd
 import numpy as np
+from Interpretation.Moteur.dsp import DSP
 
 class LaboInterface(QMainWindow):
     def __init__(self):
+
         # On définit la config avant super() pour être sûr qu'elle existe
         self.layout_chks = QHBoxLayout()
         self.param = None
         self.CONFIG_PARAMETRES = {
-            "WaveProbeDecomposition": ["ProbeSpacing", "Depth", "Gain","StartCutIndex"],  #on definit pout chaque methode les parametres
-            "Decomposition_LiuHuang": ["ProbeSpacing", "Depth", "Gain","omega","order"],
-            "Decomposition_EldrupAnderson": ["ProbeSpacing", "Depth", "Gain","omega","order"],
-            "Dsp1": ["Window_Size", "Overlap"],
+            "WaveProbeDecomposition": ["ProbeSpacing", "Depth", "Gravity","StartCutIndex"],  #on definit pout chaque methode les parametres
+            "Decomposition_LiuHuang": ["ProbeSpacing", "Depth", "Gravity","omega","order"],
+            "Decomposition_EldrupAnderson": ["ProbeSpacing", "Depth", "Gravity","omega","order"],
+            "Standard": ["Window_Size", "Overlap"],
             "Image1": ["Contrast", "Brightness", "Zoom"]
         }
-        super().__init__()
 
+
+        super().__init__()
         # Initialisation de tes variables
         self.check_list = []
         self.champs = {}  # Dictionnaire pour stocker les QLineEdit du formulaire
@@ -34,45 +38,39 @@ class LaboInterface(QMainWindow):
         self.legend_object = None
 
         self.setWindowTitle("Interface de Traitement de Données")
-        self.resize(800, 600)
+        self.resize(800, 800)
 
-        self.main_layout = QVBoxLayout()
-        self.main_layout.setSpacing(10)
-        self.main_layout.addLayout(self.layout_chks)
 
-        # --- AJOUT DU WIDGET GRAPHIQUE (Obligatoire pour afficher) ---
-        self.graphWidget = pg.PlotWidget()
-        self.graphWidget.setBackground('w')
-        self.main_layout.addWidget(self.graphWidget)
+        # --- 1. CONFIGURATION DU SCROLL AREA ---
+        self.main_scroll_area = QScrollArea()
+        self.main_scroll_area.setWidgetResizable(True)
+        self.setCentralWidget(self.main_scroll_area)
+        self.container_widget = QWidget()
+        self.main_layout = QVBoxLayout(self.container_widget)
+        self.main_scroll_area.setWidget(self.container_widget)
 
-        # --- AJOUT DU LAYOUT POUR L'ÉCHELLE ---
-        self.layout_legende = QHBoxLayout()
-        self.main_layout.addLayout(self.layout_legende)
+        # --- 2. LAYOUT HORIZONTAL PRINCIPAL (Division Gauche/Droite) ---
+        self.Horizontal_layout = QHBoxLayout(self.container_widget)
 
-        # ZONE HAUT
-        layout_haut = QHBoxLayout()
-        self.menu1 = QComboBox()
-        self.menu1.addItems(["WaveProbeDecomposition", "Decomposition_EldrupAnderson", "Decomposition_LiuHuang"])
-        self.menu1.currentTextChanged.connect(self.update_form)
 
-        self.menu2 = QComboBox()
-        self.menu2.addItems(["Dsp1", "Dsp2", "Dsp3"])
-        # Optionnel : connecter aussi menu2 et menu3 si je veux qu'ils changent le formulaire
-        self.menu2.currentTextChanged.connect(self.update_form)
-        self.menu3 = QComboBox()
-        self.menu3.addItems(["Image1", "Image2", "Image3"])
-        self.menu3.currentTextChanged.connect(self.update_form)
 
-        layout_haut.addWidget(self.menu1)
-        layout_haut.addWidget(self.menu2)
-        layout_haut.addWidget(self.menu3)
-        self.main_layout.addLayout(layout_haut)
+        #-----------------------------------Bouton de Tuto----------------------------------------------
+        self.layout_tuto=QHBoxLayout()
+        self.btn_tuto = QPushButton("?")
 
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        self.main_layout.addWidget(line)
+        # Un petit bouton rond ou avec un point d'interrogation
+        self.btn_tuto.setFixedSize(30, 30)  # On le fait petit et carré
+        self.btn_tuto.setToolTip("Cliquer pour voir le tutoriel")
+        self.btn_tuto.clicked.connect(self.afficher_tutoriel)
+        self.btn_tuto.click()
 
-        # ZONE CENTRE
+        self.layout_tuto.addStretch()  # Pousse le bouton vers la droite
+        self.layout_tuto.addWidget(self.btn_tuto)
+        self.main_layout.addLayout(self.layout_tuto)
+
+
+        #---------------------ZONE d'insertion fichier --------------------------------------------------------------
+
         layout_fichier = QHBoxLayout()
         self.input_fichier = QLineEdit()
         self.input_fichier.setPlaceholderText("Chemin du fichier...")
@@ -82,37 +80,121 @@ class LaboInterface(QMainWindow):
         layout_fichier.addWidget(self.btn_valider)
         self.main_layout.addLayout(layout_fichier)
 
+       #--------------------Insertion des boutons de selection de colonnes -----------------------------------
+        self.scrollArea = QScrollArea()
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setFrameShape(QFrame.Shape.NoFrame)
+
+        self.chks_container=QWidget()
+        #ajout du layout au container
+        self.chks_container.setLayout(self.layout_chks)
+        #ajout du container au scroll Area
+        self.scrollArea.setWidget(self.chks_container)
+        #ajout du scroll area au main layout
+        self.main_layout.addWidget(self.scrollArea)
+
+        # --- Ajout de la Zone Horizontale
+        self.main_layout.addLayout(self.Horizontal_layout)
+
+        # --- 3. ZONE GAUCHE (Formulaire et Menus) ---
+        self.zone_gauche_widget = QWidget()
+        self.layout_gauche = QVBoxLayout(self.zone_gauche_widget)
+        self.Horizontal_layout.addWidget(self.zone_gauche_widget)
+
+        # --- 4. ZONE DROITE (Graphique et Visualisation) ---
+        self.zone_droite_widget = QWidget()
+        self.layout_droite = QVBoxLayout(self.zone_droite_widget)
+        self.Horizontal_layout.addWidget(self.zone_droite_widget)  # Plus large
+
+        # ----------------- AJOUT DU WIDGET GRAPHIQUE (Obligatoire pour afficher) -------------------------------------
+
+        self.btn_zoom = QPushButton("[]")  # Ou une icône d'agrandissement
+        self.btn_zoom.setFixedWidth(10)
+        self.btn_zoom.clicked.connect(self.gerer_clic_graphique)
+        self.graphWidget = pg.PlotWidget()
+        self.graphWidget.setBackground('w')
+        self.graphWidget.setMinimumHeight(200)
+        self.layout_droite.addWidget(self.graphWidget)
+        self.layout_droite.addWidget(self.btn_zoom)
+
+      # --- AJOUT DU LAYOUT POUR L'ÉCHELLE ---
+        self.layout_legende = QHBoxLayout()
+        self.layout_droite.addLayout(self.layout_legende)
+
+       # Creation du du layout
+        layout_VueSondes = QVBoxLayout()
+        #  Bouton: Afficher-sondes
+        self.btn_vueSonde = QPushButton("Afficher sondes ")
+        self.btn_vueSonde.clicked.connect(self.action_afficher_graphique)
+        self.layout_droite.addWidget(self.btn_vueSonde)
+
+        self.layout_droite.addLayout(layout_VueSondes)
+
+        # -------------------------------ZONE HAUT menus ----------------------------------------
+        layout_haut = QHBoxLayout()
+        self.menu1 = QComboBox()
+        self.menu1.addItems(["WaveProbeDecomposition", "Decomposition_EldrupAnderson", "Decomposition_LiuHuang"])
+        self.menu1.currentTextChanged.connect(self.update_form)
+
+        self.menu2 = QComboBox()
+        self.menu2.addItems(["Dsp1", "Standard", "Conjuguee"])
+        # Optionnel : connecter aussi menu2 et menu3 si je veux qu'ils changent le formulaire
+        self.menu2.currentTextChanged.connect(self.update_form)
+        self.menu3 = QComboBox()
+        self.menu3.addItems(["Image1", "Image2", "Image3"])
+        self.menu3.currentTextChanged.connect(self.update_form)
+
+        layout_haut.addWidget(self.menu1)
+        layout_haut.addWidget(self.menu2)
+        layout_haut.addWidget(self.menu3)
+        self.layout_gauche.addLayout(layout_haut)
+
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        self.layout_gauche.addWidget(line)
 
 
+      #-----------------------------------------Zone du Formulaire---------------------------------
         self.form_layout = QFormLayout()
-        self.main_layout.addLayout(self.form_layout)
-
+        self.layout_gauche.addLayout(self.form_layout)
         # Appel initial pour remplir le formulaire au démarrage
         self.update_form(self.menu1.currentText())
+        self.irregular() # ajout du bouton de selction de l'irregularite
 
-        self.irregular()
+      #--- menu deroulant du formulaire
+        # 1. Votre formulaire principal actuel
+        self.layout_gauche.addLayout(self.form_layout)
 
+        # 2. Ajout d'une ligne de séparation (optionnel)
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        self.layout_gauche.addWidget(line)
 
+        # 3. LE NOUVEAU MENU DÉROULANT (Paramètres additionnels)
+        self.layout_gauche.addWidget(QLabel("Paramètres Additionnels :"))
+        self.menu_optionnel = QComboBox()
+        self.menu_optionnel.addItems(["Aucun", "Filtrage", "Export"])
+        self.menu_optionnel.currentTextChanged.connect(self.update_sous_formulaire)
+        self.layout_gauche.addWidget(self.menu_optionnel)
 
-        #bouton de generation de graphe pour voir le resultat des sondes
-        layout_VueSondes=QHBoxLayout()
-        self.btn_vueSonde=QPushButton("afficher sondes ")
-        self.btn_vueSonde.clicked.connect(self.action_afficher_graphique)
-        layout_VueSondes.addWidget(self.btn_vueSonde)
-        self.main_layout.addLayout(layout_VueSondes)
+        # 4. LE LAYOUT DYNAMIQUE (C'est ici qu'on ajoutera les QLineEdit)
+        self.sous_form_layout = QFormLayout()
+        self.layout_gauche.addLayout(self.sous_form_layout)
 
+        # Dictionnaire pour stocker les nouveaux champs
+        self.champs_optionnels = {}
 
-
-        # ZONE BAS
-        self.main_layout.addStretch()
+        #----------------------------ZONE BAS: boutton de traitement -----------------------------------------------
+        self.layout_gauche.addStretch()
         self.btn_entree = QPushButton("EXÉCUTER LE TRAITEMENT")
         self.btn_entree.setFixedHeight(50)
-        self.main_layout.addWidget(self.btn_entree)
+        self.layout_gauche.addWidget(self.btn_entree)
         self.btn_entree.clicked.connect(self.lancer_calcul_final)
-        container = QWidget()
-        container.setLayout(self.main_layout)
-        self.setCentralWidget(container)
 
+
+
+
+#----------------------------------------Methodes d'action des boutons------------------------------------------
     def layout_columns(self):
         # 1. On nettoie le layout (on enlève les anciennes colonnes s'il y en a)
         while self.layout_chks.count():
@@ -139,6 +221,8 @@ class LaboInterface(QMainWindow):
         self.main_layout.addLayout(self.layout_chks)
 
     def update_form(self, choix_menu):
+
+
         # 1. Nettoyage
         while self.form_layout.count():
             child = self.form_layout.takeAt(0)
@@ -157,6 +241,8 @@ class LaboInterface(QMainWindow):
             self.form_layout.addRow(f"{nom} :", self.param)
             self.champs[nom] = self.param
 
+
+
     def irregular(self):
         layout_Irregular = QHBoxLayout()
         # On attache 'irregular' à self pour qu'il ne disparaisse pas de la mémoire
@@ -172,7 +258,7 @@ class LaboInterface(QMainWindow):
         layout_Irregular.addWidget(self.irreg_true)
         layout_Irregular.addWidget(self.irreg_false)
 
-        self.main_layout.addLayout(layout_Irregular)
+        self.layout_gauche.addLayout(layout_Irregular)
 
 
     def parcourir_fichier(self):
@@ -255,6 +341,11 @@ class LaboInterface(QMainWindow):
                 depth=params.get("Depth", 2.0),  # Valeur par défaut si absent
                 Irreg=self.irreg_true.isChecked()
             )
+            moteur_dsp = DSP(
+                data=data_full,
+                selected_columns=selected_columns,
+                time_column_index=0  # On suppose que le temps est en colonne 0
+            )
 
 
             # 5. Appel de la méthode spécifique
@@ -286,6 +377,14 @@ class LaboInterface(QMainWindow):
                        f"Lié (Bound) - Inc: {aib:.4f} / Réf: {arb:.4f}")
                 QMessageBox.information(self, "Résultat", msg)
 
+            elif self.method_selected =="Standard" :
+                freq, resultats = moteur_dsp.executer_calcul(methode='Standard')
+                self.afficher_graphique_dsp(freq, resultats)
+
+            elif self.method_selected == "Conjuguee":
+                freq, resultats = moteur_dsp.executer_calcul(methode='Conjuguee')
+                self.afficher_graphique_dsp(freq, resultats)
+
             else:
                 QMessageBox.information(self, "Info", f"La méthode {self.method_selected} est reconnue mais le traitement spécifique n'est pas codé.")
 
@@ -293,9 +392,7 @@ class LaboInterface(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Erreur de calcul", f"Détails : {str(e)}")
 
-    import pyqtgraph as pg
-    import pandas as pd
-    import numpy as np
+
 
     def show_graph(self, donnees, titre="Graphique"):
         """
@@ -346,12 +443,103 @@ class LaboInterface(QMainWindow):
 
     def action_afficher_graphique(self):
         # On appelle ta méthode show_graph en utilisant l'attribut de classe
-        self.show_graph(self.data)
+          self.show_graph(self.data)
 
+    def afficher_tutoriel(self):
+        print("on rentre dans la methode")
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.setWindowTitle("Guide d'utilisation")
+
+        # Texte du tutoriel (tu peux utiliser du HTML pour la mise en forme)
+        tuto_texte = """
+        <h2>Bienvenue dans l'interface de traitement</h2>
+        <p>Suivez ces étapes pour analyser vos données :</p>
+        <ol>
+            <li><b>Importer un fichier :</b> Cliquez sur 'Parcourir' pour charger votre CSV.</li>
+           <li><b>Visualiser :</b> Cliquez sur 'Afficher sondes' pour vérifier les signaux.</li>
+             <li><b>Visualiser :</b> Cliquez sur 'A' en noir a gauche pour remettre a l'echelle.</li>
+            <li><b>Sélectionner la méthode :</b> Choisissez votre methode dans le menu.</li>
+            <li><b>Paramétrer :</b> Remplissez les champs (Profondeur, Omega, etc.).</li>
+            <li><b>Exécuter :</b> Lancez le calcul final pour obtenir un graph ou un resulat</li>
+        </ol>
+        """
+        msg.setText(tuto_texte)
+        msg.exec()
+
+    def afficher_graphique_dsp(self, freq, resultats):
+        """
+        Affiche la Densité Spectrale de Puissance.
+        X = Fréquences (Hz)
+        Y = Puissance (m²/Hz ou m².s)
+        """
+        self.graphWidget.clear()
+        self.graphWidget.setTitle("Densité Spectrale de Puissance (DSP)")
+        self.graphWidget.setLabel('left', "Densité", units="m².s")
+        self.graphWidget.setLabel('bottom', "Fréquence", units="Hz")
+
+        if hasattr(self, 'legend_object') and self.legend_object is not None:
+            self.graphWidget.removeItem(self.legend_object)
+        self.legend_object = self.graphWidget.addLegend()
+
+        colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
+
+        for i, (col_name, dsp_values) in enumerate(resultats.items()):
+            color = colors[i % len(colors)]
+            pen = pg.mkPen(color=color, width=2)
+
+            # On trace DSP en fonction de Freq
+            self.graphWidget.plot(freq, dsp_values, pen=pen, name=f"DSP {col_name}")
+
+    def gerer_clic_graphique(self):
+            # Créer une nouvelle fenêtre temporaire
+            self.zoom_win = QMainWindow()
+            self.zoom_win.setWindowTitle("Zoom Graphique")
+
+
+            # Créer un nouveau widget de graph qui copie les données
+            zoom_graph = pg.PlotWidget()
+            zoom_graph.setBackground('w')
+            # On récupère tous les items du graph original pour les copier
+            for item in self.graphWidget.listDataItems():
+                zoom_graph.addItem(item)
+
+
+
+            self.zoom_win.setCentralWidget(zoom_graph)
+            self.zoom_win.resize(1000, 700)
+            self.zoom_win.show()
+
+    def update_sous_formulaire(self, choix):
+        # 1. Nettoyage du layout précédent
+        while self.sous_form_layout.count():
+            child = self.sous_form_layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+        self.champs_optionnels = {}  # Reset du dictionnaire
+
+        # 2. Définition des champs selon le choix
+        nouveaux_champs = []
+        if choix == "Filtrage":
+            nouveaux_champs = ["FreqMin", "FreqMax", "TypeFiltre"]
+        elif choix == "Export":
+            nouveaux_champs = ["NomFichier", "Format"]
+
+        # 3. Création des widgets
+        for nom in nouveaux_champs:
+            champ = QLineEdit()
+            self.sous_form_layout.addRow(f"{nom} :", champ)
+            self.champs_optionnels[nom] = champ
+
+def charger_style(app):
+    with open("style.qss", "r") as f:
+        app.setStyleSheet(f.read())
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    charger_style(app)
     # Test avec une liste de colonnes
     window = LaboInterface()
     window.show()
