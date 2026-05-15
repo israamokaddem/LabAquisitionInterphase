@@ -1330,7 +1330,7 @@ def correct_distortion_perspective(img, points_pixels, points_cm, img_path, suff
 
     #   Returns:
     #       mire_corrected: Image corrigée
-    #       output_path: Chemin de l'image sauvegardée
+    #       output_path: Chemindete de l'image sauvegardée
     #       transformed_pixels: Points pixels après transformation
 
     global transformed_pixels_perspective, transformed_physical_perspective, H_perspective, w_perspective, h_perspective

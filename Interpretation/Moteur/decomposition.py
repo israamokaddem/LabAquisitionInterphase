@@ -137,7 +137,7 @@ class Decomposition:
             f0.append(f[fmaxIndex])
         return f0
 
-    def WaveProbeDecomposition(self,selected_columns,sci=10,IntegrationMin=0.9 ,IntegrationMax=1.1):
+    def WaveProbeDecomposition(self,selected_columns,startCutIndex=10,IntegrationMin=0.9 ,IntegrationMax=1.1):
         """
         This function breaks down the signal into:
              - Incident part
@@ -225,7 +225,7 @@ class Decomposition:
 
             return A_i, A_r
 
-        startCutIndex=sci # delete the first index dsp data to the calculation
+        startCutIndex=startCutIndex # delete the first index dsp data to the calculation
         if startCutIndex >= NombreDonnee//2: # verifier que le cut index entre par le chercheur est bien <nbdonness/2
             raise ValueError(
                 f"Le StartCutIndex ({startCutIndex}) est trop élevé pour la taille des données.\n"
@@ -299,7 +299,7 @@ class Decomposition:
 
         return Ai, Ar
 
-    def Decomposition_LiuHuang(self,selected_columns,f, order=2):
+    def Decomposition_LiuHuang(self,selected_columns,frequence, order=2):
         '''
 
          This function is based on the Liu et Huang method (2004)
@@ -318,7 +318,7 @@ class Decomposition:
         - Ai: incident wave amplitude;
         - Ar: reflected wave amplitude .
         '''
-        omega = 2 * np.pi * f
+        omega = 2 * np.pi * frequence
         def Eta_FT(order, eta_temporal, timeSeries):
             Eta_xm = 1 / timeSeries[-1] * np.sum(
                 eta_temporal * np.exp(-1j * order * omega * timeSeries) * (timeSeries[1] - timeSeries[0]))
