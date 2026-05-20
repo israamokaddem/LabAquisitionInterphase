@@ -783,7 +783,7 @@ class LaboInterface(QMainWindow):
         py = int(self.champs.get("Pattern_Y").text()) if self.champs.get("Pattern_Y") else 6
 
         self.moteur_imagerie.calculer_coordonnees_physiques(spacing_cm=4.0, pattern=(px, py))
-
+        cv2.waitKey(2)
         self.img_redressee = self.moteur_imagerie.calculer_homographie_et_redresser(img)
 
         if self.img_redressee is not None:

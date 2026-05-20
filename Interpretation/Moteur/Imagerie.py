@@ -611,6 +611,14 @@ class Imagerie:
         print(f"Recalage appliqué : {'OUI' if hauteur_cm != 0 else 'NON'}")
         print(f"Nouvelle origine Y : {self.transformed_physical_radiale[0][1]:.4f} cm")
 
+       # --------------------------------------------------------------------
+        # CORRECTION ICI : ON PRÉPARE ET ON AFFICHE LE GRAPH D'ABORD !
+        # ---------------------------------------------------------------------
+        plt.tight_layout()
+        print("Affichage du graphique devant l'interface...")
+        plt.show(block=True)  # <--- Ouvre la fenêtre et bloque jusqu'à sa fermeture
+        plt.pause(1)
+
         # Demander si l'utilisateur veut sauvegarder ces nouvelles coordonnées
         print(f"\n{'=' * 60}")
         print("SAUVEGARDE DES COORDONNÉES RECALÉES")
@@ -649,9 +657,7 @@ class Imagerie:
                 print(f"Erreur lors de l'écriture du fichier : {e}")
                 return False
 
-        print("Ouverture de la fenêtre de graphique...")
-        plt.show(block=False)
-        plt.pause(0.1)
+
         return True
 
 
