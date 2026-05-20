@@ -49,7 +49,7 @@ class Decomposition:
         self.Irreg= Irreg
         self.variables = ["ProbeSpacing", "Depth", "Gain"] # titre des colonnes selectionnes
 
-    def RelationDisp(self, omega, tolerence):
+    def RelationDisp(self, frequence, tolerence):
         """
         This function relates on the dispersion relation
         and returns the wave number k using the Newton-Raphson method:
@@ -58,7 +58,7 @@ class Decomposition:
         The loop start from the initial guess x0 and iterates until
         the result converges to the specified tolerance.
         """
-
+        omega = 2 * np.pi * frequence
         def z(x):
             y = x * np.tanh(x * self.depth) - (omega ** 2) / self.g  # Dispersion equation (1)
             return y
@@ -72,14 +72,16 @@ class Decomposition:
         # print('omega :',omega,' , k :',k,' , lambda :',2*np.pi/k)
         return k
 
-    def RelationDisp_freewave(self,omega, tolerence, n):
+    def RelationDisp_freewave(self,frequence, tolerence, n):
+
         """
         USed in liu & Huang method and Lykke Andersen & Eldrub method
         where n represent the order
         """
 
+        omega= 2 * np.pi * frequence
         def z(x):
-            y = x * np.tanh(x * self.depth) - ((n * omega) ** 2) / self.g  # Dispersion equation (1)
+            y = x * np.tanh(x * self.depth) - ((n *2 * np.pi * frequence) ** 2) / self.g  # Dispersion equation (1)
             return y
 
         def z2(x):
@@ -88,10 +90,11 @@ class Decomposition:
             return y
 
         k_n = newton(x0=np.pi / (1.95 * self.depth), func=z, fprime=z2, tol=tolerence, maxiter=10000)
-        # print('omega :',omega,' , k_n :',k_n,' , lambda_n :',2*np.pi/k_n)
+        # print('omega :',2 * np.pi * frequence,' , k_n :',k_n,' , lambda_n :',2*np.pi/k_n)
         return k_n
 
-    def RelationDisp_fifthOrder(self, omega, H, tolerence):
+    def RelationDisp_fifthOrder(self, frequence, H, tolerence):
+        omega= 2* np.pi * frequence
         def f(k):
             y = -omega / k * np.sqrt(k / self.g) + T(k) + (k * H / 2) ** 2 * T(k) * (
                     (2 + 7 * S(k) ** 2) / (4 * (1 - S(k)) ** 2)) + (k * H / 2) ** 4 * T(k) * (
@@ -134,7 +137,7 @@ class Decomposition:
             f0.append(f[fmaxIndex])
         return f0
 
-    def WaveProbeDecomposition(self,selected_columns,sci):
+    def WaveProbeDecomposition(self,selected_columns,startCutIndex=10,IntegrationMin=0.9 ,IntegrationMax=1.1):
         """
         This function breaks down the signal into:
              - Incident part
@@ -160,6 +163,10 @@ class Decomposition:
         phase = np.angle(tf)
         dsp = (tf * tf.conjugate()) / NombreDonnee ** 2
         f = (1 / timeStep) / 2 * np.linspace(0, 1, int(NombreDonnee / 2))
+
+        # change the default value if irregular
+        IntegrationMin=0.5 if self.Irreg else IntegrationMin
+        IntegrationMax=4.5 if self.Irreg else IntegrationMax
 
         if NbProbe > len(self.ProbeSpacing):  #nbr de colonnes selectionnes par l'utilisateur doit pas depasser le nbr de positions probeSpacing
             raise ValueError("Too many columns selected for the number of probe positions available.")
@@ -218,7 +225,7 @@ class Decomposition:
 
             return A_i, A_r
 
-        startCutIndex=sci # delete the first index dsp data to the calculation
+        startCutIndex=startCutIndex # delete the first index dsp data to the calculation
         if startCutIndex >= NombreDonnee//2: # verifier que le cut index entre par le chercheur est bien <nbdonness/2
             raise ValueError(
                 f"Le StartCutIndex ({startCutIndex}) est trop élevé pour la taille des données.\n"
@@ -280,10 +287,10 @@ class Decomposition:
 
         if self.Irreg == False:
             # ICI on intégre que sur le fondamentale sur la plage de -10% à +10 % de la fréquence fondamentale
-            Ai = np.sqrt(np.sum(np.array(Ai_zelt[int(fmaxIndex[0] * 0.9):int(fmaxIndex[0] * 1.1)]) * np.array(
-                Ai_zelt[int(fmaxIndex[0] * 0.9):int(fmaxIndex[0] * 1.1)].conjugate())))
-            Ar = np.sqrt(np.sum(np.array(Ar_zelt[int(fmaxIndex[0] * 0.9):int(fmaxIndex[0] * 1.1)]) * np.array(
-                Ar_zelt[int(fmaxIndex[0] * 0.9):int(fmaxIndex[0] * 1.1)].conjugate())))
+            Ai = np.sqrt(np.sum(np.array(Ai_zelt[int(fmaxIndex[0] * IntegrationMin):int(fmaxIndex[0] * IntegrationMax)]) * np.array(
+                Ai_zelt[int(fmaxIndex[0] * IntegrationMin):int(fmaxIndex[0] * IntegrationMax)].conjugate())))
+            Ar = np.sqrt(np.sum(np.array(Ar_zelt[int(fmaxIndex[0] * IntegrationMin):int(fmaxIndex[0] * IntegrationMax)]) * np.array(
+                Ar_zelt[int(fmaxIndex[0] * IntegrationMin):int(fmaxIndex[0] *IntegrationMax)].conjugate())))
         else:
             Ai = np.sqrt(2 * np.sum(np.array(Ai_zelt[int(fmaxIndex[0] / 2):int(fmaxIndex[0] * 4.5)]) * np.array(
                 Ai_zelt[int(fmaxIndex[0] / 2):int(fmaxIndex[0] * 4.5)].conjugate())))
@@ -292,7 +299,7 @@ class Decomposition:
 
         return Ai, Ar
 
-    def Decomposition_LiuHuang(self,selected_columns,omega, order=2):
+    def Decomposition_LiuHuang(self,selected_columns,frequence, order=2):
         '''
 
          This function is based on the Liu et Huang method (2004)
@@ -311,7 +318,7 @@ class Decomposition:
         - Ai: incident wave amplitude;
         - Ar: reflected wave amplitude .
         '''
-
+        omega = 2 * np.pi * frequence
         def Eta_FT(order, eta_temporal, timeSeries):
             Eta_xm = 1 / timeSeries[-1] * np.sum(
                 eta_temporal * np.exp(-1j * order * omega * timeSeries) * (timeSeries[1] - timeSeries[0]))
@@ -337,7 +344,7 @@ class Decomposition:
 
         print('lambda :', (2 * np.pi / k), ' , lambda nf : ', (2 * np.pi / k_n), ' , lambda nb : ',
               (2 * np.pi / (k * n)))
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(self.variables)):
             CI_1.append(np.exp(-1j * k * self.ProbeSpacing[m]) / 2)
             CR_1.append(np.exp(1j * k * self.ProbeSpacing[m]) / 2)
             CIB_n.append(np.exp(-1j * k * n * self.ProbeSpacing[m]) / 2)
@@ -348,7 +355,7 @@ class Decomposition:
         # 1er ordre
 
         A11, A12, A21, A22, B1, B2 = 0, 0, 0, 0, 0, 0
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(self.variables)):
             A11 += CI_1[m] ** 2
             A12 += CI_1[m] * CR_1[m]
             A22 += CR_1[m] ** 2
@@ -366,7 +373,7 @@ class Decomposition:
         # 2eme ordre
 
         A11, A12, A13, A14, A21, A22, A23, A24, A31, A32, A33, A34, A41, A42, A43, A44, B1, B2, B3, B4 = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(self.variables)):
             A11 += CIB_n[m] ** 2
             A12 += CRB_n[m] * CIB_n[m]
             A13 += CIF_n[m] * CIB_n[m]
@@ -400,7 +407,7 @@ class Decomposition:
         return Ai_1, Ar_1, AiB_n, ArB_n, AiF_n, ArF_n
 
 
-    def Decomposition_EldrupAnderson(self,selected_columns,omega,order=2):
+    def Decomposition_EldrupAnderson(self,selected_columns,frequence,order=2):
         '''
          This function is based on the Lykke Andersen, Eldrup and Frigaard method (2016 - 2017)
          Is derivated of Liu and Huang method but a correction is applied for the case where bound and free harmonic are similar celerity
@@ -420,7 +427,7 @@ class Decomposition:
         - Ai: incident wave amplitude;
         - Ar: reflected wave amplitude .
         '''
-
+        omega = 2 * np.pi * frequence
         def Eta_FT(order, eta_temporal, timeSeries):
             Eta_xm = 1 / timeSeries[-1] * np.sum(
                 eta_temporal * np.exp(-1j * order * omega * timeSeries) * (timeSeries[1] - timeSeries[0]))
@@ -440,7 +447,7 @@ class Decomposition:
         # STEP 2.1 : Intial value calculation
 
         CI_1, CR_1, CIB_n, CIF_n, CRB_n, CRF_n = [], [], [], [], [], []
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(selected_columns)):
             CI_1.append(np.exp(-1j * k_i * self.ProbeSpacing[m]) / 2)
             CR_1.append(np.exp(1j * k_r * self.ProbeSpacing[m]) / 2)
             CIB_n.append(np.exp(-1j * k_i * n * self.ProbeSpacing[m]) / 2)
@@ -450,7 +457,7 @@ class Decomposition:
 
         # 1er ordre
         A11, A12, A21, A22, B1, B2 = 0, 0, 0, 0, 0, 0
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(selected_columns)):
             A11 += CI_1[m] ** 2
             A12 += CI_1[m] * CR_1[m]
             A22 += CR_1[m] ** 2
@@ -468,7 +475,7 @@ class Decomposition:
         # 2eme ordre
 
         A11, A12, A13, A14, A21, A22, A23, A24, A31, A32, A33, A34, A41, A42, A43, A44, B1, B2, B3, B4 = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        for m in range(len(self.ProbeSpacing)):
+        for m in range(len(selected_columns)):
             A11 += CIB_n[m] ** 2
             A12 += CRB_n[m] * CIB_n[m]
             A13 += CIF_n[m] * CIB_n[m]
@@ -508,7 +515,7 @@ class Decomposition:
         while eps >= 0.00001:  # for j in range(3):
             Ai_init = (Ai_1 + AiB_n)  # parametre de reference pour la tolerance
             CI_1, CR_1, CIB_n, CIF_n, CRB_n, CRF_n = [], [], [], [], [], []
-            for m in range(len(self.ProbeSpacing)):
+            for m in range(len(selected_columns)):
                 CI_1.append(np.exp(-1j * k_i * self.ProbeSpacing[m]) / 2)
                 CR_1.append(np.exp(1j * k_r * self.ProbeSpacing[m]) / 2)
                 CIB_n.append(np.exp(-1j * k_i * n * self.ProbeSpacing[m]) / 2)
@@ -518,7 +525,7 @@ class Decomposition:
 
             # 1er ordre
             A11, A12, A21, A22, B1, B2 = 0, 0, 0, 0, 0, 0
-            for m in range(len(self.ProbeSpacing)):
+            for m in range(len(selected_columns)):
                 A11 += CI_1[m] ** 2
                 A12 += CI_1[m] * CR_1[m]
                 A22 += CR_1[m] ** 2
@@ -537,7 +544,7 @@ class Decomposition:
 
             A11, A12, A13, A14, A21, A22, A23, A24, A31, A32, A33, A34, A41, A42, A43, A44, B1, B2, B3, B4 = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-            for m in range(len(self.ProbeSpacing)):
+            for m in range(len(selected_columns)):
                 A11 += CIB_n[m] ** 2
                 A12 += CRB_n[m] * CIB_n[m]
                 A13 += CIF_n[m] * CIB_n[m]
@@ -585,7 +592,8 @@ if __name__ == "__main__":
     h = 0.6
     f_test = 0.5
     positions = [0.0, 0.45, 1.25, 2.30]  # Positions x des 4 sondes
-    omega = 2 * np.pi * 0.5
+    frequence = 0.5
+    omega = 2 * np.pi * frequence
 
     # Temps : de 0 à 100s avec 10 000 points
     t = np.linspace(0, 100, 10000)
@@ -595,7 +603,7 @@ if __name__ == "__main__":
     # On utilise la dispersion linéaire pour générer k
     # (Note: moteur temporaire juste pour calculer k)
     temp_moteur = Decomposition(data=None, depth=h, ProbeSpacing=positions)
-    k_theo = temp_moteur.RelationDisp(omega, 1e-6)
+    k_theo = temp_moteur.RelationDisp(0.5, 1e-6)
 
     amp_inc = 1.0  # Amplitude cible incidente
     amp_ref = 0.2  # Amplitude cible réfléchie (20% de réflexion)
@@ -629,12 +637,12 @@ if __name__ == "__main__":
 
         Ai1, Ar1, AiB, ArB, AiF, ArF = moteur.Decomposition_LiuHuang(
             selected_columns=colonnes,
-            omega=omega,
+            f=frequence,
             order=2
         )
         Ai12, Ar12, AiB2, ArB2, AiF2, ArF2 = moteur.Decomposition_EldrupAnderson(
             selected_columns=colonnes,
-            omega=omega,
+            f=frequence,
             order=2
         )
 
