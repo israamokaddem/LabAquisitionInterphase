@@ -37,7 +37,7 @@ class GestionnaireNI:
             if len(voies) > 0:
                 self.boitier = appareil
                 self.voies_disponibles = voies
-                break # On a trouvé notre module, on arrête la recherche
+                break# On a trouvé notre module, on arrête la recherche
 
         # Si après la boucle, on n'a rien trouvé
         if not self.boitier:

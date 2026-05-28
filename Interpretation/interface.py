@@ -131,6 +131,8 @@ class LaboInterface(QMainWindow):
 
         self.btn_entree.clicked.connect(self.lancer_calcul_final)
 
+
+
         # ----------------- AJOUT DU WIDGET GRAPHIQUE (Obligatoire pour afficher) -------------------------------------
 
         self.btn_zoom = QPushButton("Zoomer graph")  # Ou une icône d'agrandissement
@@ -158,30 +160,43 @@ class LaboInterface(QMainWindow):
      #Initialisation de layout et boutons de la methode imagerie
     #--------------------------------------------------------------------------------------------
         self.status_bar = self.statusBar()
-        self.btn_calibrer = QPushButton("Calibrer l'image")
-        self.btn_calibrer.setFixedHeight(50)
-        self.btn_calibrer.hide()
-        self.btn_detect_surface = QPushButton("Détection Surface Libre")
+
+        # Étape 1 : Fenêtrage et détection des coins sur la mire
+        self.btn_calibrer_mire = QPushButton("1. Fenêtrage & Détection Mire")
+        self.btn_calibrer_mire.setFixedHeight(40)
+        self.btn_calibrer_mire.hide()
+
+        # Étape 2 : Redressage de la mire pour contrôle visuel
+        self.btn_redresser_mire = QPushButton("2. Distortion radiale et perspective la Mire")
+        self.btn_redresser_mire.setFixedHeight(40)
+        self.btn_redresser_mire.hide()
+
+        # Étape 3 : Demande Dossier d'images + Fichier CSV (Perspective, Radiale, Heatmap)
+        self.btn_correction_images = QPushButton("3.Redressage des Images")
+        self.btn_correction_images.setFixedHeight(40)
+        self.btn_correction_images.hide()
+
+        # Étape 4 : Détection de la surface libre
+        self.btn_detect_surface = QPushButton("4. Détection Surface Libre")
+        self.btn_detect_surface.setFixedHeight(40)
         self.btn_detect_surface.hide()
 
-        self.btn_redresser = QPushButton("Redresser l'image")
-        self.btn_redresser.setFixedHeight(50)
-        self.btn_redresser.hide()
-
-        self.layout_droite.addWidget(self.btn_calibrer)
-        self.layout_droite.addWidget(self.btn_redresser)
+        # Ajout ordonné au layout vertical de droite
+        self.layout_droite.addWidget(self.btn_calibrer_mire)
+        self.layout_droite.addWidget(self.btn_redresser_mire)
+        self.layout_droite.addWidget(self.btn_correction_images)
         self.layout_droite.addWidget(self.btn_detect_surface)
 
-
-
-        self.btn_calibrer.clicked.connect(self.lancer_calibration)
-        self.btn_redresser.clicked.connect(self.lancer_redressement)
+        # Connexions aux méthodes d'action
+        self.btn_calibrer_mire.clicked.connect(self.lancer_calibration)
+        self.btn_redresser_mire.clicked.connect(self.lancer_redressement())
+        self.btn_correction_images.clicked.connect(self.lancer_redressement())
         self.btn_detect_surface.clicked.connect(self.lancer_detection_surface)
 
         # -------------terminal ----------
         self.console_output = QPlainTextEdit()
         self.console_output.setReadOnly(True)  # On ne veut pas que l'utilisateur écrive dedans
-        self.console_output.setMaximumHeight(150)
+        self.console_output.setMaximumHeight(250)
         self.label_console = QLabel("Logs Console :")
         # Pour qu'elle ne prenne pas toute la place
         self.console_output.setStyleSheet(
@@ -317,7 +332,13 @@ class LaboInterface(QMainWindow):
             self.champs[nom] = self.param
 
     def irregular(self):
-        layout_Irregular = QHBoxLayout()
+        # 1. CRÉATION D'UN WIDGET CONTENEUR
+        self.zone_irregular = QWidget()
+
+        # 2. Le layout est maintenant attaché à ce widget
+        layout_Irregular = QHBoxLayout(self.zone_irregular)
+        layout_Irregular.setContentsMargins(0, 0, 0, 0)  # Enlève les marges pour un alignement propre
+
         # On attache 'irregular' à self pour qu'il ne disparaisse pas de la mémoire
         irregular_group = QButtonGroup(self)
         self.irreg_true = QRadioButton("YES")
@@ -331,7 +352,8 @@ class LaboInterface(QMainWindow):
         layout_Irregular.addWidget(self.irreg_true)
         layout_Irregular.addWidget(self.irreg_false)
 
-        self.layout_gauche.addLayout(layout_Irregular)
+        # 3. On ajoute le widget conteneur complet à ton interface gauche
+        self.layout_gauche.addWidget(self.zone_irregular)
 
     ''' def parcourir_fichier(self):
         import pandas as pd
@@ -670,10 +692,11 @@ class LaboInterface(QMainWindow):
             self.btn_zoom.hide()
             self.btn_vueSonde.hide()
             self.btn_entree.hide()
-
+            self.zone_irregular.hide()
 
             # ---> NOUVEAU : On cache la zone des colonnes <---
             self.scrollArea.hide()
+
 
             # 2. On affiche les boutons d'imagerie
             self.btn_calibrer.show()
@@ -682,6 +705,7 @@ class LaboInterface(QMainWindow):
             # --- AJOUT : Afficher la console ---
             self.label_console.show()
             self.console_output.show()
+            self.btn_traitement_lot.show()
 
 
         else:
@@ -694,6 +718,8 @@ class LaboInterface(QMainWindow):
             # --- AJOUT : Cacher la console ---
             self.label_console.hide()
             self.console_output.hide()
+            self.zone_irregular.show()
+
 
 
             # ---> NOUVEAU : On réaffiche la zone des colonnes <---
@@ -702,6 +728,7 @@ class LaboInterface(QMainWindow):
             # 2. On cache les boutons d'imagerie
             self.btn_calibrer.hide()
             self.btn_redresser.hide()
+            self.btn_traitement_lot.hide()
 
     def lancer_calibration(self):
         # vider les anciens points selectionnes chque clique sur le bouton calibrer
@@ -772,7 +799,7 @@ class LaboInterface(QMainWindow):
 
         self.moteur_imagerie.calculer_coordonnees_physiques(pattern=pattern)
 
-    def lancer_redressement(self):
+    ''' def lancer_redressement(self):
         img = cv2.imread(self.fichier)
         # Application du flatfield si sigma est renseigné
         sigma = self.champs.get("Sigma_Flatfield").text()
@@ -789,7 +816,52 @@ class LaboInterface(QMainWindow):
         if self.img_redressee is not None:
             cv2.destroyAllWindows()
             cv2.imshow("Image Redressee", self.img_redressee)
+            cv2.waitKey(1) '''
+
+    def lancer_redressement(self):
+        # 1. Vérifier que la calibration a bien été effectuée au préalable
+        if self.moteur_imagerie.points_pixels_origine is None:
+            QMessageBox.warning(self, "Erreur", "Veuillez d'abord calibrer l'image avec un damier.")
+            return
+
+        # 2. Ouvrir une boîte de dialogue pour choisir l'image de la VAGUE
+        fichier_vague, _ = QFileDialog.getOpenFileName(
+            self,
+            "Sélectionner l'image de la VAGUE à redresser",
+            "",
+            "Images (*.png *.jpg *.jpeg *.bmp *.tif)"
+        )
+
+        # Si l'utilisateur annule la sélection
+        if not fichier_vague:
+            self.status_bar.showMessage("Action annulée : Aucune image de vague sélectionnée.")
+            return
+
+        # 3. Charger la nouvelle image (la vague)
+        img_vague = cv2.imread(fichier_vague)
+        if img_vague is None:
+            QMessageBox.critical(self, "Erreur", f"Impossible de lire l'image : {fichier_vague}")
+            return
+
+        # 4. Traitement optionnel : Application du flatfield sur la vague
+        sigma = self.champs.get("Sigma_Flatfield").text()
+        if sigma:
+            img_vague = self.moteur_imagerie.imflatfield(img_vague, float(sigma))
+
+        # 5. Redresser l'image de la vague (utilise la calibration stockée dans le moteur)
+        # Note : On ne rappelle plus calculer_coordonnees_physiques ici, c'est déjà fait à la calibration !
+        self.img_redressee = self.moteur_imagerie.calculer_homographie_et_redresser(img_vague)
+
+        if self.img_redressee is not None:
+            # Mettre à jour l'interface visuellement
+            self.input_fichier.setText(fichier_vague)
+            self.fichier = fichier_vague
+
+            # Affichage du résultat
+            cv2.destroyAllWindows()
+            cv2.imshow("Image Redressee (Vague)", self.img_redressee)
             cv2.waitKey(1)
+            self.status_bar.showMessage("Vague redressée ! Vous pouvez maintenant détecter la surface libre.")
 
 
 
@@ -807,13 +879,60 @@ class LaboInterface(QMainWindow):
             self.moteur_imagerie.img_redressee = self.img_redressee
 
             # 3. On appelle la méthode de calcul du moteur
-            success= self.moteur_imagerie.detecter_surface_libre_et_recaler()
+            success= self.moteur_imagerie.detecter_surface_libre_et_recaler(mod_lot=False)
 
 
         except Exception as e:
             # Si tu as encore une erreur de "unpack", vérifie bien que TOUS les
             # return de Imagerie.py ne renvoient qu'une seule valeur.
             QMessageBox.critical(self, "Erreur", f"Erreur : {str(e)}")
+
+    def lancer_traitement_lot(self):
+        # 1. Vérifier la calibration
+        if self.moteur_imagerie.points_pixels_origine is None:
+            QMessageBox.warning(self, "Erreur", "Veuillez d'abord calibrer l'image avec un damier.")
+            return
+
+        # 2. Sélection multiple de fichiers (remarque le 's' à getOpenFileNames)
+        fichiers_vagues, _ = QFileDialog.getOpenFileNames(
+            self,
+            "Sélectionner LES images de vagues à traiter",
+            "",
+            "Images (*.png *.jpg *.jpeg *.bmp *.tif)"
+        )
+
+        if not fichiers_vagues:
+            self.status_bar.showMessage("Action annulée.")
+            return
+
+        # 3. Boucler sur toutes les images sélectionnées
+        from tqdm import tqdm  # Pour avoir une belle barre de progression dans la console
+
+        print(f"\n--- DÉBUT DU TRAITEMENT PAR LOT ({len(fichiers_vagues)} images) ---")
+
+        for fichier in tqdm(fichiers_vagues, desc="Traitement des vagues"):
+            img_vague = cv2.imread(fichier)
+            if img_vague is None:
+                print(f"Erreur de lecture pour {fichier}")
+                continue
+
+                # ---> AJOUT : On donne le chemin de l'image actuelle au moteur
+            self.moteur_imagerie.image_path = fichier
+            # a) Redressement
+            sigma = self.champs.get("Sigma_Flatfield").text()
+
+            if sigma:
+                img_vague = self.moteur_imagerie.imflatfield(img_vague, float(sigma))
+
+            self.img_redressee = self.moteur_imagerie.calculer_homographie_et_redresser(img_vague)
+            self.moteur_imagerie.img_redressee = self.img_redressee
+
+            # b) Détection de la surface libre
+            # L'image est déjà dans le moteur, on lance la détection
+            self.moteur_imagerie.detecter_surface_libre_et_recaler(mod_lot=True)
+
+        print("--- FIN DU TRAITEMENT PAR LOT ---")
+        QMessageBox.information(self, "Terminé", f"Traitement de {len(fichiers_vagues)} images terminé !")
 
 
     def rafraichir_style_menus(self, menu_actif):
