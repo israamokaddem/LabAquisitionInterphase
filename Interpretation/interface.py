@@ -151,7 +151,7 @@ class LaboInterface(QMainWindow):
         # Creation du du layout
         layout_VueSondes = QVBoxLayout()
         #  Bouton: Afficher-sondes
-        self.btn_vueSonde = QPushButton("Fréquence temporelle")
+        self.btn_vueSonde = QPushButton("Visualiation")
         self.btn_vueSonde.clicked.connect(self.action_afficher_graphique)
         self.layout_droite.addWidget(self.btn_vueSonde)
 
@@ -187,10 +187,17 @@ class LaboInterface(QMainWindow):
         self.layout_droite.addWidget(self.btn_correction_images)
         self.layout_droite.addWidget(self.btn_detect_surface)
 
+        # À ajouter après btn_detect_surface
+        self.btn_traitement_lot = QPushButton("5. Traitement par Lot")
+        self.btn_traitement_lot.setFixedHeight(40)
+        self.btn_traitement_lot.hide()
+        self.layout_droite.addWidget(self.btn_traitement_lot)
+        self.btn_traitement_lot.clicked.connect(self.lancer_traitement_lot)
+
         # Connexions aux méthodes d'action
         self.btn_calibrer_mire.clicked.connect(self.lancer_calibration)
-        self.btn_redresser_mire.clicked.connect(self.lancer_redressement())
-        self.btn_correction_images.clicked.connect(self.lancer_redressement())
+        self.btn_redresser_mire.clicked.connect(self.lancer_redressement)
+        self.btn_correction_images.clicked.connect(self.lancer_calibration)
         self.btn_detect_surface.clicked.connect(self.lancer_detection_surface)
 
         # -------------terminal ----------
@@ -639,16 +646,22 @@ class LaboInterface(QMainWindow):
             self.graphWidget.plot(freq, dsp_values, pen=pen, name=f"DSP {col_name}")
 
     def gerer_clic_graphique(self):
-        # Créer une nouvelle fenêtre temporaire
         self.zoom_win = QMainWindow()
         self.zoom_win.setWindowTitle("Zoom Graphique")
 
-        # Créer un nouveau widget de graph qui copie les données
         zoom_graph = pg.PlotWidget()
         zoom_graph.setBackground('w')
-        # On récupère tous les items du graph original pour les copier
+
+        # Copie des axes et titre depuis le graphique original
+        zoom_graph.setTitle(self.graphWidget.plotItem.titleLabel.text)
+        zoom_graph.addLegend()
+
+        # ✅ On COPIE les données (xData/yData) sans toucher aux items originaux
         for item in self.graphWidget.listDataItems():
-            zoom_graph.addItem(item)
+            x = item.xData
+            y = item.yData
+            if x is not None and y is not None:
+                zoom_graph.plot(x, y, pen=item.opts['pen'], name=item.name())
 
         self.zoom_win.setCentralWidget(zoom_graph)
         self.zoom_win.resize(1000, 700)
@@ -682,53 +695,42 @@ class LaboInterface(QMainWindow):
         """Affiche le graphique OU les boutons d'imagerie selon le menu sélectionné."""
 
         # Sécurité si l'interface n'est pas encore totalement chargée
-        if not hasattr(self, 'btn_calibrer'):
+        if not hasattr(self, 'btn_calibrer_mire'):
             return
 
         if choix_menu == "Imagerie":
-            # 1. On cache tout ce qui concerne l'analyse de signaux
             self.btn_entree.hide()
             self.graphWidget.hide()
             self.btn_zoom.hide()
             self.btn_vueSonde.hide()
-            self.btn_entree.hide()
             self.zone_irregular.hide()
-
-            # ---> NOUVEAU : On cache la zone des colonnes <---
             self.scrollArea.hide()
 
-
-            # 2. On affiche les boutons d'imagerie
-            self.btn_calibrer.show()
-            self.btn_redresser.show()
+            # Affichage des boutons d'imagerie
+            self.btn_calibrer_mire.show()
+            self.btn_redresser_mire.show()
+            self.btn_correction_images.show()
             self.btn_detect_surface.show()
-            # --- AJOUT : Afficher la console ---
+            self.btn_traitement_lot.show()
             self.label_console.show()
             self.console_output.show()
-            self.btn_traitement_lot.show()
-
 
         else:
-            # 1. On réaffiche les éléments graphiques
             self.graphWidget.show()
             self.btn_zoom.show()
             self.btn_vueSonde.show()
             self.btn_entree.show()
-
-            # --- AJOUT : Cacher la console ---
+            self.zone_irregular.show()
+            self.scrollArea.show()
             self.label_console.hide()
             self.console_output.hide()
-            self.zone_irregular.show()
 
-
-
-            # ---> NOUVEAU : On réaffiche la zone des colonnes <---
-            self.scrollArea.show()
-
-            # 2. On cache les boutons d'imagerie
-            self.btn_calibrer.hide()
-            self.btn_redresser.hide()
+            # Masquage des boutons d'imagerie
+            self.btn_calibrer_mire.hide()
+            self.btn_redresser_mire.hide()
+            self.btn_correction_images.hide()
             self.btn_traitement_lot.hide()
+            self.btn_detect_surface.hide()
 
     def lancer_calibration(self):
         # vider les anciens points selectionnes chque clique sur le bouton calibrer
