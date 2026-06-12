@@ -43,7 +43,10 @@ Le fichier `requirements.txt` installe automatiquement :
 - **pyqtgraph** — graphiques temps réel
 - **pandas** — fusion et export des données
 - **numpy** — calculs numériques
-
+- **scipy** — calculs FFT et relation de dispersion (méthodes Zelt, Liu & Huang)
+- **opencv-python** — traitement d'image (calibration, homographie, détection surface libre)
+- **matplotlib** — visualisation des résultats d'imagerie
+- **tqdm** — barre de progression lors du traitement par lot d'images
 ---
 
 ## Étape 3 — Drivers et bibliothèques selon le matériel
@@ -97,8 +100,12 @@ Aucun driver à installer. La carte doit être :
 - Connectée au même réseau local (câble Ethernet ou switch)
 - Son adresse IP notée (ex: `169.254.77.238`)
 - Saisir cette IP dans l'interface WaveLab au moment du scan
-
+ 
 ---
+## Étape 3bis — Configuration du répertoire de travail pour interphase de traitement
+
+Le fichier `style.qss` (feuille de style de l'interface) doit se trouver
+à la **racine du projet**, au même niveau que le dossier `Interpretation/`
 
 ## Étape 4 — Vérification finale
 
@@ -143,6 +150,15 @@ Ce script vérifie automatiquement :
 **Carte MCC détectée dans InstaCal mais pas dans WaveLab**
 → Lancer WaveLab en tant qu'administrateur (clic droit → Exécuter en tant qu'administrateur).
 
+**"FileNotFoundError: style.qss"**
+→ Vérifier que `style.qss` est bien dans le dossier racine du projet
+  et que le Working Directory de PyCharm pointe sur ce même dossier.
+
+**"ModuleNotFoundError: cv2"**
+→ `pip install opencv-python`
+
+**"ModuleNotFoundError: scipy"**
+→ `pip install scipy`
 ---
 
 ## Support

@@ -1,0 +1,47 @@
+# WaveLab — Dépendances Python
+# Installer avec : pip install -r requirements.txt
+
+# Interface graphique
+PyQt6>=6.4.0
+pyqtgraph>=0.13.0
+
+# Traitement des données
+pandas>=1.5.0
+numpy>=1.23.0
+
+# Boîtier MCC USB-1808X (Windows)
+# Nécessite MCC DAQ Software installé au préalable :
+# https://digilent.com/reference/software/mccdaq-cd/start
+mcculw>=1.0.0
+
+# Boîtier National Instruments
+# Nécessite NI-DAQmx installé au préalable :
+# https://www.ni.com/fr-fr/support/downloads/drivers/download.ni-daq-mx.html
+nidaqmx>=0.6.5
+
+# WaveLab — Dépendances Python
+# Installer avec : pip install -r requirements.txt
+
+# Interface graphique
+PyQt6>=6.4.0
+pyqtgraph>=0.13.0
+
+# Traitement des données
+pandas>=1.5.0
+numpy>=1.23.0
+scipy>=1.10.0            # ← AJOUT : FFT et relation de dispersion (decomposition.py, dsp.py)
+
+# Traitement d'image
+opencv-python>=4.8.0     # ← AJOUT : détection damier, homographie, flatfield (Imagerie.py)
+matplotlib>=3.7.0        # ← AJOUT : graphiques surface libre (Imagerie.py)
+tqdm>=4.65.0             # ← AJOUT : barre de progression traitement par lot (Imagerie.py)
+
+# Boîtier MCC USB-1808X (Windows)
+# Nécessite MCC DAQ Software installé au préalable :
+# https://digilent.com/reference/software/mccdaq-cd/start
+mcculw>=1.0.0
+
+# Boîtier National Instruments
+# Nécessite NI-DAQmx installé au préalable :
+# https://www.ni.com/fr-fr/support/downloads/drivers/download.ni-daq-mx.html
+nidaqmx>=0.6.5

@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a8e2ff60-3c2d-47db-a1b2-8a74b47ad281" name="Changes" comment="commit add NI final version and working on the other aquisition cards">
+    <list default="true" id="a8e2ff60-3c2d-47db-a1b2-8a74b47ad281" name="Changes" comment="fixing bugs:working interphase">
+      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Interpretation/interface.py" beforeDir="false" afterPath="$PROJECT_DIR$/Interpretation/interface.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/projectConfig/INSTALLATION.md" beforeDir="false" afterPath="$PROJECT_DIR$/INSTALLATION.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/projectConfig/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/projectConfig/verifier_installation.py" beforeDir="false" afterPath="$PROJECT_DIR$/verifier_installation.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -110,6 +114,7 @@
       <recent name="C:\Users\HP\PycharmProjects\Interpahse_Aquisition\Aquisition" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\HP\PycharmProjects\Interpahse_Aquisition" />
       <recent name="C:\Users\HP\PycharmProjects\Interpahse_Aquisition\ScriptsSourceLabo" />
       <recent name="C:\Users\HP\PycharmProjects\Interpahse_Aquisition\Aquisition\TestBugFinder" />
       <recent name="C:\Users\HP\PycharmProjects\Interpahse_Aquisition\Interpretation" />
@@ -248,7 +253,15 @@
       <option name="project" value="LOCAL" />
       <updated>1781022889749</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="fixing bugs:working interphase">
+      <option name="closed" value="true" />
+      <created>1781267851319</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1781267851320</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -280,7 +293,8 @@
     <MESSAGE value="commit Creation gestion du boitier NI sans interface" />
     <MESSAGE value="commit Creation of graphic interface for the aquisition" />
     <MESSAGE value="commit add NI final version and working on the other aquisition cards" />
-    <option name="LAST_COMMIT_MESSAGE" value="commit add NI final version and working on the other aquisition cards" />
+    <MESSAGE value="fixing bugs:working interphase" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixing bugs:working interphase" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -412,7 +426,7 @@
     <SUITE FILE_PATH="coverage/interface_py$decomposition.coverage" NAME="decomposition Coverage Results" MODIFIED="1777884950724" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
     <SUITE FILE_PATH="coverage/interface_py$dsp.coverage" NAME="dsp Coverage Results" MODIFIED="1777277603610" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
     <SUITE FILE_PATH="coverage/interface_py$GestionnairePrincipal.coverage" NAME="GestionnairePrincipal Coverage Results" MODIFIED="1781182608113" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
-    <SUITE FILE_PATH="coverage/interface_py$interface.coverage" NAME="interface Coverage Results" MODIFIED="1781267651975" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation" />
+    <SUITE FILE_PATH="coverage/interface_py$interface.coverage" NAME="interface Coverage Results" MODIFIED="1781269103809" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation" />
     <SUITE FILE_PATH="coverage/interface_py$GestionnaireMCC.coverage" NAME="GestionnaireMCC Coverage Results" MODIFIED="1781184503544" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
     <SUITE FILE_PATH="coverage/interface_py$tester_api_kistler.coverage" NAME="tester_api_kistler Coverage Results" MODIFIED="1781080953568" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
     <SUITE FILE_PATH="coverage/interface_py$Imagerie.coverage" NAME="Imagerie Coverage Results" MODIFIED="1779088397304" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
