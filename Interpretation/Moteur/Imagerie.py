@@ -304,7 +304,7 @@ class Imagerie:
 
         print(f"Origine Y recalée. Décalage appliqué : {y_physique_zero:.2f} cm")
 
-    def detecter_surface_libre_et_recaler(self):
+    def detecter_surface_libre_et_recaler(self,mod_lot=False):
 
         print(f"\n{'=' * 60}")
         print("PHASE DE DÉTECTION DE LA SURFACE LIBRE ET RECALAGE VERTICAL")
@@ -614,51 +614,105 @@ class Imagerie:
        # --------------------------------------------------------------------
         # CORRECTION ICI : ON PRÉPARE ET ON AFFICHE LE GRAPH D'ABORD !
         # ---------------------------------------------------------------------
-        plt.tight_layout()
-        print("Affichage du graphique devant l'interface...")
-        plt.show(block=True)  # <--- Ouvre la fenêtre et bloque jusqu'à sa fermeture
-        plt.pause(1)
+        if not mod_lot:
+            plt.tight_layout()
+            print("Affichage du graphique devant l'interface...")
+            plt.show(block=True)  # <--- Ouvre la fenêtre et bloque jusqu'à sa fermeture
+            plt.pause(1)
 
-        # Demander si l'utilisateur veut sauvegarder ces nouvelles coordonnées
-        print(f"\n{'=' * 60}")
-        print("SAUVEGARDE DES COORDONNÉES RECALÉES")
-        print(f"{'=' * 60}")
+            # Demander si l'utilisateur veut sauvegarder ces nouvelles coordonnées
+            print(f"\n{'=' * 60}")
+            print("SAUVEGARDE DES COORDONNÉES RECALÉES")
+            print(f"{'=' * 60}")
 
-        # Remplace le bloc input par :
-        reply = QMessageBox.question(None, 'Sauvegarde',
-                                     "Voulez-vous sauvegarder les nouvelles coordonnées ?",
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
-        if reply == QMessageBox.StandardButton.Yes:
-            try:
-                fichier_sortie, _ = QFileDialog.getSaveFileName(
-                    None, "Sauvegarder les résultats de détection",
-                    "surface_recalée.txt", "Fichiers Texte (*.txt)"
-                )
+            # Remplace le bloc input par :
+            reply = QMessageBox.question(None, 'Sauvegarde',
+                                         "Voulez-vous sauvegarder les nouvelles coordonnées ?",
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
-                if fichier_sortie:
-                    with open(fichier_sortie, 'w', encoding='utf-8') as f:
-                        f.write("# RESULTATS DE DETECTION SURFACE LIBRE\n")
-                        f.write(f"# Date : {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-                        f.write(f"# Niveau moyen detecte (pixels) : {hauteur_cm:.2f}\n")
-                        f.write("# " + "=" * 50 + "\n")
-                        f.write("# Index | X (pixel) | Y (pixel)\n")
+            if reply == QMessageBox.StandardButton.Yes:
+                try:
+                    fichier_sortie, _ = QFileDialog.getSaveFileName(
+                        None, "Sauvegarder les résultats de détection",
+                        "surface_recalée.txt", "Fichiers Texte (*.txt)"
+                    )
 
-                        for i, pt in enumerate(self.transformed_pixels_radiale):
-                            f.write(f"{i:4d}  {pt[0]:12.2f}  {pt[1]:12.2f}\n")
+                    if fichier_sortie:
+                        with open(fichier_sortie, 'w', encoding='utf-8') as f:
+                            f.write("# RESULTATS DE DETECTION SURFACE LIBRE\n")
+                            f.write(f"# Date : {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                            f.write(f"# Niveau moyen detecte (pixels) : {hauteur_cm:.2f}\n")
+                            f.write("# " + "=" * 50 + "\n")
+                            f.write("# Index | X (pixel) | Y (pixel)\n")
 
-                        print(f"Fichier sauvegardé avec succès : {fichier_sortie}")
-                        return True
-                else:
-                    print("Sauvegarde annulée.")
+                            for i, pt in enumerate(self.transformed_pixels_radiale):
+                                f.write(f"{i:4d}  {pt[0]:12.2f}  {pt[1]:12.2f}\n")
+
+                            print(f"Fichier sauvegardé avec succès : {fichier_sortie}")
+                            return True
+                    else:
+                        print("Sauvegarde annulée.")
+                        return False
+
+                except Exception as e:
+                    print(f"Erreur lors de l'écriture du fichier : {e}")
                     return False
 
-            except Exception as e:
-                print(f"Erreur lors de l'écriture du fichier : {e}")
-                return False
 
+        else:
+
+            # MODE LOT : Pas d'interface, on sauvegarde automatiquement
+            plt.close(fig)  # Ferme le graphique en arrière-plan
+
+            if self.image_path:
+
+                # 1. Extraire le dossier et le nom du fichier
+                dossier = os.path.dirname(self.image_path)
+                nom_complet = os.path.basename(self.image_path)  # ex: "photo_1.jpg"
+                nom_sans_extension, _ = os.path.splitext(nom_complet)  # "photo_1" et ".jpg"
+
+                # 2. Créer le chemin de sortie (même dossier, extension .csv)
+                fichier_sortie = os.path.join(dossier, f"{nom_sans_extension}.csv")
+
+                # 3. Écrire le fichier CSV automatiquement
+
+                try:
+
+                    with open(fichier_sortie, 'w', encoding='utf-8') as f:
+
+                        f.write("# RESULTATS DE DETECTION SURFACE LIBRE\n")
+
+                        f.write(f"# Image source : {nom_complet}\n")
+
+                        f.write(f"# Date : {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+
+                        f.write(f"# Niveau moyen detecte : {hauteur_cm:.4f} cm\n")
+
+                        f.write("# " + "=" * 50 + "\n")
+
+                        f.write("Index,X_cm,Y_cm\n")  # Format CSV standard avec virgules
+
+                        # On sauvegarde les coordonnées physiques (en cm)
+
+                        for i, pt in enumerate(self.transformed_physical_radiale):
+                            f.write(f"{i},{pt[0]:.4f},{pt[1]:.4f}\n")
+
+                    print(f"  -> Sauvegardé : {nom_sans_extension}.csv")
+
+                except Exception as e:
+
+                    print(f"  -> Erreur lors de la sauvegarde de {nom_complet} : {e}")
+
+            else:
+
+                print("  -> Erreur : Chemin de l'image inconnu, sauvegarde impossible.")
 
         return True
+
+
+
+
 
 
 

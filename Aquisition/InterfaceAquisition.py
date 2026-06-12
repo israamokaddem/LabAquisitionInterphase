@@ -1,20 +1,93 @@
 import sys
 import os
+import csv
+import math
 import pyqtgraph as pg
+import ctypes
 
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout,
                              QVBoxLayout, QPushButton, QLabel, QStackedWidget,
                              QFrame, QGridLayout, QScrollArea, QSpinBox, QProgressBar, QFileDialog, QMessageBox,
-                             QComboBox, QLineEdit)
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve
+                             QComboBox, QLineEdit, QCheckBox)
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer
 from PyQt6.QtGui import QCursor
 
 from Aquisition.AquisitionThread import AcquisitionThread
 from GestionnaireNI import GestionnaireNI
-from Aquisition.TestBugFinder.GestionnaireKistlerV1 import (
-    GestionnaireKistler, BoitierIntrouvableError)
-
-
+from GestionnaireKistler import (
+    GestionnaireKistler, BoitierIntrouvableError,
+    TimeoutReseauError, ConnexionInterrompueError, KistlerError)
+from GestionnairePrincipal import GestionnairePrincipal
+# Dictionnaire de configuration par type de capteur
+# Clé : nom affiché dans le ComboBox
+# Valeur : label p1, label p2, défaut p1, défaut p2, unité, formule, description formule
+CAPTEURS_CONFIG = {
+    "Pression": {
+        "p1_label": "Pleine Échelle PE (bar)",
+        "p2_label": "Tension zéro V_zéro (V)",
+        "p1_default": 10.0,
+        "p2_default": 0.0,
+        "unite"     : "bar",
+        # P = PE × (V - V_ref) / (V_max - V_ref)
+        # V_max = 10V (plage capteur 0-10V) ou 5V (4-20mA → 1-5V)
+        "formule"   : lambda V, p1, p2: p1 * (V - p2) / (10.0 - p2) if (10.0 - p2) != 0 else 0.0,
+        "formule_str": "PE × (V - V_ref) / (10 - V_ref)"
+    },
+    "Force": {
+        "p1_label"  :  "Capacité Nominale CN (N)",
+        "p2_label"  : "Sensibilité S (mV/V)",
+        "p1_default": 1000.0,
+        "p2_default": 2.0,
+        "unite"     : "N",
+        # F = CN × V / (S/1000 × V_exc)
+        # V_exc = 10V (tension d'excitation du pont, fixe)
+        "formule"   : lambda V, p1, p2: p1 * V / ((p2 / 1000.0) * 10.0) if p2 != 0 else 0.0,
+        "formule_str": "CN × V / (S/1000 × 10)"
+    },
+    "Accélération": {
+        "p1_label"  : "Sensibilité S (mV/g)",
+        "p2_label"  : "Tension de biais V_biais (V)",
+        "p1_default": 100.0,
+        "p2_default": 0.0,
+        "unite"     : "m/s²",
+        # A = (V - V_bias) × 1000/S × 9.81
+        # V_bias : tension DC de repos du capteur IEPE (éliminée par couplage AC)
+        "formule"   : lambda V, p1, p2: (V - p2) * 1000.0 / p1 * 9.81 if p1 != 0 else 0.0,
+        "formule_str": "(V - V_bias) × 1000/S × 9.81"
+    },
+    "Vitesse": {
+        "p1_label"  :"Sensibilité S (mV/(m/s))",
+        "p2_label"  : "Tension offset V_offset (V)",
+        "p1_default": 500.0,
+        "p2_default": 0.0,
+        "unite"     : "m/s",
+        # v = (V - V_0) / (S/1000)
+        # V_0 : tension à vitesse nulle (offset)
+        "formule"   : lambda V, p1, p2: (V - p2) / (p1 / 1000.0) if p1 != 0 else 0.0,
+        "formule_str": "(V - V_0) / (S / 1000)"
+    },
+    "Sonde": {
+        "p1_label"  : "Gain conditionneur G (°C/V)",
+        "p2_label"  : "Température zéro T_zéro (°C)",
+        "p1_default": 10.0,
+        "p2_default": 0.0,
+        "unite"     : "°C",
+        # T = Gain × V + T_0
+        # Valable pour tout conditionneur PT100 / thermocouple à sortie linéarisée
+        "formule"   : lambda V, p1, p2: p1 * V + p2,
+        "formule_str": "Gain × V + T_0"
+    },
+    "Brut": {
+        "p1_label"  :"Gain a",
+        "p2_label"  : "Offset b",
+        "p1_default": 1.0,
+        "p2_default": 0.0,
+        "unite"     : "V",
+        # y = a × V + b  (aucune conversion physique)
+        "formule"   : lambda V, p1, p2: p1 * V + p2,
+        "formule_str": "a × V + b"
+    }
+}
 # ==========================================
 # 1. CLASSE PERSONNALISÉE POUR LES VOIES
 # ==========================================
@@ -119,7 +192,8 @@ class WaveLabApp(QMainWindow):
         super().__init__()
         # Initialisation par défaut sur National Instruments
         self.input_ip_manuelle = None
-        self.gestionnaire = GestionnaireNI()
+        self.mode_simulation_mcc = False
+        self.gestionnaire = GestionnairePrincipal()
 
         self.setWindowTitle("WaveLab - Acquisition")
         self.setMinimumSize(1000, 700)
@@ -238,16 +312,34 @@ class WaveLabApp(QMainWindow):
         lbl_select = QLabel("Matériel de l'essai :")
         lbl_select.setStyleSheet("font-size: 13px; font-weight: bold; color: #374151;")
 
-        self.combo_choix_materiel = QComboBox()
-        self.combo_choix_materiel.addItems(["National Instruments (USB / Chassis)", "Kistler LabAmp (Réseau TCP/IP)"])
-        self.combo_choix_materiel.currentIndexChanged.connect(self.changer_backend_materiel)
-        self.combo_choix_materiel.setMinimumWidth(250)
+        self.check_ni = QCheckBox("National Instruments (USB / Chassis)")
+        self.check_ni.setChecked(True)
+
+        self.check_kistler = QCheckBox("Kistler LabAmp (Réseau TCP/IP)")
+        self.check_kistler.stateChanged.connect(self.toggle_champ_ip)
+
+        # Après self.chk_kistler = ... ajouter :
+        mcc_row = QHBoxLayout()
+        self.chk_mcc = QCheckBox("MCC USB-1808X")
+        self.chk_mcc_sim = QCheckBox("Simulation")
+        self.chk_mcc_sim.setChecked(True)
+        self.chk_mcc_sim.setEnabled(False)
+        self.chk_mcc_sim.setStyleSheet("color: #6b7280; font-size: 11px;")
+        self.chk_mcc.toggled.connect(lambda on: self.chk_mcc_sim.setEnabled(on))
+        mcc_row.addWidget(self.chk_mcc)
+        mcc_row.addSpacing(20)
+        mcc_row.addWidget(self.chk_mcc_sim)
+        mcc_row.addStretch()
 
         selector_layout.addWidget(lbl_select)
-        selector_layout.addWidget(self.combo_choix_materiel)
+        selector_layout.addWidget(self.check_ni)
+        selector_layout.addWidget(self.check_kistler)
         selector_layout.addStretch()
-        layout.addLayout(selector_layout)
 
+
+
+        layout.addLayout(selector_layout)
+        layout.addLayout(mcc_row)
         layout.addSpacing(20)
 
         header_layout = QHBoxLayout()
@@ -301,11 +393,18 @@ class WaveLabApp(QMainWindow):
         self.btn_continuer = QPushButton("Continuer → Sélection voies")
         self.btn_continuer.setProperty("class", "BtnPrimary")
         self.btn_continuer.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_continuer.clicked.connect(lambda: self.switch_page(1))
+        self.btn_continuer.clicked.connect(self.valider_selection_boitiers)
 
         bottom_layout.addStretch()
         bottom_layout.addWidget(self.btn_continuer)
         layout.addLayout(bottom_layout)
+
+    def toggle_champ_ip(self):
+        if self.check_kistler.isChecked():
+            self.input_ip_manuelle.show()
+        else:
+            self.input_ip_manuelle.hide()
+            self.input_ip_manuelle.clear()
 
     def changer_backend_materiel(self):
         """Bascule de manière transparente entre les deux gestionnaires sans casser l'UI"""
@@ -331,12 +430,21 @@ class WaveLabApp(QMainWindow):
             if widget is not None:
                 widget.deleteLater()
 
-    def create_boitier_btn(self, name, desc, status):
+    def create_boitier_btn(self, name, desc, status, simule=False):
         btn = QPushButton()
         is_online = (status == "online")
         btn.setCheckable(is_online)
-        btn.setProperty("class", "BoxButton")
         btn.setMinimumHeight(60)
+
+        # Style jaune si simulé, sinon style normal
+        if simule:
+            btn.setStyleSheet("""
+                QPushButton { background-color: #FFFBEB; border: 1px solid #F59E0B;
+                              border-radius: 6px; text-align: left; }
+                QPushButton:checked { background-color: #FEF3C7; border: 1px solid #D97706; }
+            """)
+        else:
+            btn.setProperty("class", "BoxButton")
 
         if is_online:
             btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -347,12 +455,20 @@ class WaveLabApp(QMainWindow):
         btn_layout.setContentsMargins(15, 10, 15, 10)
 
         dot = QLabel("●")
-        dot_color = "#639922" if is_online else "#B4B2A9"
+        dot_color = "#F59E0B" if simule else ("#639922" if is_online else "#B4B2A9")
         dot.setStyleSheet(f"color: {dot_color}; font-size: 16px;")
         dot.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        info = QLabel(f"<span style='font-size: 13px; font-weight: 600; color: #1f2937;'>{name}</span><br>"
-                      f"<span style='font-size: 11px; color: #6b7280;'>{desc}</span>")
+        # Ajout du badge "SIMULATION" si besoin
+        badge_simulation = ""
+        if simule:
+            badge_simulation = " <span style='background:#F59E0B; color:white; border-radius:4px; padding: 1px 6px; font-size:10px; font-weight:bold;'>SIMULATION</span>"
+
+        info = QLabel(
+            f"<span style='font-size: 13px; font-weight: 600; color: #1f2937;'>"
+            f"{name}{badge_simulation}</span><br>"
+            f"<span style='font-size: 11px; color: #6b7280;'>{desc}</span>"
+        )
         info.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         btn_layout.addWidget(dot)
@@ -361,29 +477,37 @@ class WaveLabApp(QMainWindow):
         return btn
 
     def lancer_scan_materiel(self):
-        # 1. On prépare l'UI
+        scan_ni = self.check_ni.isChecked()
+        scan_kistler = self.check_kistler.isChecked()
+        scan_mcc = self.chk_mcc.isChecked()  # ← ajouter
+
+        if not scan_ni and not scan_kistler and not scan_mcc:  # ← ajouter scan_mcc
+            QMessageBox.warning(self, "Attention", "Veuillez cocher au moins un type de matériel à scanner.")
+            return
+
         self.lbl_online.setText("STATUT — RECHERCHE EN COURS...")
         self.btn_scanner.setText("Scan...")
         self.btn_scanner.setEnabled(False)
 
-        # On force le gestionnaire à oublier les anciens boîtiers avant de chercher
-        if hasattr(self.gestionnaire, 'boitiers_detectes'):
-            self.gestionnaire.boitiers_detectes = []
-
-      # On nettoie immédiatement l'affichage
         self.nettoyer_grille_online()
-        self._boitiers_affiches = 0  # compteur pour placer les widgets dans la grille
+        self._boitiers_affiches = 0
+        self.boutons_boitiers = []  # Essentiel pour la page des voies !
 
         liste_ips_manuelles = None
-        if self.combo_choix_materiel.currentIndex() == 1:
+        if scan_kistler:
             texte_ip = self.input_ip_manuelle.text().strip()
             if texte_ip:
                 liste_ips_manuelles = [ip.strip() for ip in texte_ip.split(",") if ip.strip()]
 
-        # 2. On lance la recherche dans le thread d'arrière-plan
-        # On passe la liste d'IPs au thread (sera None pour NI ou si le champ Kistler est vide)
-        self.thread_scan = ScanThread(self.gestionnaire, ips_manuelles=liste_ips_manuelles)
-        # Affichage progressif : chaque boîtier trouvé s'affiche immédiatement
+        # Lancement asynchrone pour ne pas figer l'interface
+        self.thread_scan = ScanThread(
+            self.gestionnaire,
+            scan_ni=self.check_ni.isChecked(),
+            scan_kistler=self.check_kistler.isChecked(),
+            scan_mcc=self.chk_mcc.isChecked(),
+            mode_simulation_mcc=self.chk_mcc_sim.isChecked(),
+            ips_manuelles=liste_ips_manuelles,
+        )
         self.thread_scan.boitier_trouve.connect(self._afficher_boitier_en_direct)
         self.thread_scan.scan_termine.connect(self.finaliser_scan_materiel)
         self.thread_scan.start()
@@ -392,41 +516,63 @@ class WaveLabApp(QMainWindow):
         """Appelé dès qu'un boîtier est confirmé, avant la fin du scan total."""
         idx = self._boitiers_affiches
         desc = f"{boitier['modele']} · {boitier['total_voies']} voies"
-        btn_box = self.create_boitier_btn(boitier['nom'], desc, status="online")
+        btn_box = self.create_boitier_btn(boitier['nom'], desc, status="online", simule=boitier.get("simule", False))
         if idx == 0:
             btn_box.setChecked(True)
+
+        # <-- AJOUT : On attache les données et on sauvegarde le bouton
+        btn_box.boitier_data = boitier
+        self.boutons_boitiers.append(btn_box)
+
         self.grid_online.addWidget(btn_box, idx // 3, idx % 3)
         self._boitiers_affiches += 1
         self.lbl_online.setText(f"EN LIGNE — {self._boitiers_affiches} DISPOSITIF(S) TROUVÉ(S)")
         self.lbl_top_status.setText(f"{self._boitiers_affiches} boîtier(s) trouvé(s)")
 
-
     def finaliser_scan_materiel(self, succes, message_erreur):
         boitiers = self.gestionnaire.boitiers_detectes
 
-        if succes and boitiers:
-            # Les boîtiers ont déjà été affichés en direct via _afficher_boitier_en_direct
-            # On se contente de mettre à jour la page voies
-            self.build_page_voies(boitiers)
-        else:
-            # Aucun boîtier trouvé
+        # On ne construit plus la page ici ! On gère juste les erreurs.
+        if not succes or not boitiers:
             if message_erreur:
                 QMessageBox.critical(self, "Erreur de Connexion", message_erreur)
 
             self.lbl_online.setText("EN LIGNE — Aucun appareil détecté")
             self.lbl_top_status.setText("0 boîtier")
-            lbl_erreur = QLabel("Aucun matériel détecté. Vérifiez l'alimentation et la connectique (USB/Réseau).")
+            lbl_erreur = QLabel("Aucun matériel détecté. Vérifiez l'alimentation et la connectique.")
             lbl_erreur.setStyleSheet("color: #791F1F; font-weight: bold;")
             self.grid_online.addWidget(lbl_erreur, 0, 0)
             self.build_page_voies([])
 
-        # On réactive le bouton
         self.btn_scanner.setText("Scanner")
         self.btn_scanner.setEnabled(True)
 
     # ==========================================
     # CONSTRUCTION: PAGE "SÉLECTION VOIES"
     # ==========================================
+
+    def valider_selection_boitiers(self):
+        """Filtre les boîtiers cochés et construit la page des voies sur mesure"""
+        boitiers_selectionnes = []
+
+        # On inspecte tous les boutons mémorisés
+        if hasattr(self, 'boutons_boitiers'):
+            for btn in self.boutons_boitiers:
+                if btn.isChecked():
+                    boitiers_selectionnes.append(btn.boitier_data)
+
+        # Sécurité anti-clic vide
+        if not boitiers_selectionnes:
+            QMessageBox.warning(self, "Attention", "Veuillez sélectionner au moins un boîtier pour continuer.")
+            return
+
+        # On génère la page 2 UNIQUEMENT avec la sélection
+        self.build_page_voies(boitiers_selectionnes)
+
+        # Et on y va !
+        self.switch_page(1)
+
+
     def build_page_voies(self, boitiers_actifs=None):
         if boitiers_actifs is None:
             boitiers_actifs = []
@@ -583,6 +729,12 @@ class WaveLabApp(QMainWindow):
         grid_params.addLayout(layout_voies, 0, 2)
 
         layout.addLayout(grid_params)
+        lbl_note = QLabel(
+            "ℹ️  Nombre de points enregistrés = Durée × Fréquence  (ex: 10 s × 1000 Hz = 10 000 pts/voie)")
+        lbl_note.setStyleSheet("color: #6b7280; font-size: 11px; font-style: italic;")
+        layout.addWidget(lbl_note)
+
+        layout.addSpacing(10)
         layout.addSpacing(10)
 
         ctrl_layout = QHBoxLayout()
@@ -686,7 +838,7 @@ class WaveLabApp(QMainWindow):
                     self.courbes_actives.append(c)
                     index += 1
 
-        self.donnees_x_plot = []
+        self.donnees_x_plot = [[] for _ in range(index)]
         self.donnees_y_plot = [[] for _ in range(index)]
 
         # Lancement du Thread d'acquisition générique
@@ -696,30 +848,40 @@ class WaveLabApp(QMainWindow):
             lambda succes: self.stop_acquisition(manually=False, succes=succes))
         self.thread_acq.start()
 
-    def update_acquisition(self, nouveaux_temps, nouvelles_donnees):
-        self.donnees_x_plot.extend(nouveaux_temps)
+    def update_acquisition(self, nouveaux_temps, nouvelles_donnees, indices_courbes=None):
+        # Si aucun indice n'est fourni, on met à jour dans l'ordre (sécurité)
+        if indices_courbes is None:
+            indices_courbes = range(len(nouvelles_donnees))
 
-        for i in range(len(self.courbes_actives)):
-            self.donnees_y_plot[i].extend(nouvelles_donnees[i])
-            if len(self.donnees_x_plot) > 2000:
-                self.donnees_y_plot[i] = self.donnees_y_plot[i][-2000:]
+        # On met à jour UNIQUEMENT les courbes concernées par ce paquet (soit NI, soit Kistler)
+        for i, idx_global in enumerate(indices_courbes):
+            self.donnees_x_plot[idx_global].extend(nouveaux_temps)
+            self.donnees_y_plot[idx_global].extend(nouvelles_donnees[i])
 
-        if len(self.donnees_x_plot) > 2000:
-            self.donnees_x_plot = self.donnees_x_plot[-2000:]
+            # Anti-lag : on ne garde que les 2000 derniers points sur l'écran
+            if len(self.donnees_x_plot[idx_global]) > 2000:
+                self.donnees_x_plot[idx_global] = self.donnees_x_plot[idx_global][-2000:]
+                self.donnees_y_plot[idx_global] = self.donnees_y_plot[idx_global][-2000:]
 
-        for i, courbe in enumerate(self.courbes_actives):
-            courbe.setData(self.donnees_x_plot, self.donnees_y_plot[i])
+            # Dessin de la courbe spécifique
+            self.courbes_actives[idx_global].setData(self.donnees_x_plot[idx_global], self.donnees_y_plot[idx_global])
 
-        if self.donnees_x_plot:
-            temps_actuel = self.donnees_x_plot[-1]
+        # Mise à jour de la barre de progression globale
+        if self.donnees_x_plot[0]:
+            temps_actuel = self.donnees_x_plot[0][-1]
             self.lbl_time_acq.setText(f"{temps_actuel:.1f} s / {self.target_duree} s")
-            progress = int((temps_actuel / self.target_duree) * 100)
-            self.progress_bar.setValue(min(progress, 100))
+            self.progress_bar.setValue(min(int((temps_actuel / self.target_duree) * 100), 100))
+
+
 
     def stop_acquisition(self, manually=False, succes=True):
         if manually and hasattr(self, 'thread_acq'):
             self.thread_acq.stop()
-            self.thread_acq.wait()
+            # On attend max 2 secondes — si le thread ne s'arrête pas,
+            # on continue quand même pour ne pas figer l'UI
+            if not self.thread_acq.wait(2000):
+                print("[UI] Thread d'acquisition forcé à l'arrêt.")
+                self.thread_acq.terminate()
 
         self.btn_arreter.hide()
         self.btn_lancer.show()
@@ -743,7 +905,12 @@ class WaveLabApp(QMainWindow):
 
         freq = self.spin_freq.value()
         voies = len(getattr(self, 'courbes_actives', []))
-        temps = self.donnees_x_plot[-1] if hasattr(self, 'donnees_x_plot') and self.donnees_x_plot else 0
+
+        temps = 0
+        # On va chercher le dernier point de la première courbe [0][-1]
+        if hasattr(self, 'donnees_x_plot') and self.donnees_x_plot and self.donnees_x_plot[0]:
+            temps = self.donnees_x_plot[0][-1]
+
         pts = int(temps * freq)
         self.lbl_banner_sub.setText(f"{temps:.1f} s · {freq} Hz · {voies} voies · {pts} pts")
         self.banner_success.show()
@@ -826,7 +993,8 @@ class WaveLabApp(QMainWindow):
         self.calib_layout.addWidget(lbl_def)
 
         headers_layout = QGridLayout()
-        headers = ["VOIE", "TYPE", "UNITÉ", "VALEUR LUE"]
+        headers =  ["VOIE", "TYPE", "UNITÉ", "a  (pente)", "c  (offset)", "FORMULE"]
+
         for col, text in enumerate(headers):
             lbl = QLabel(text)
             lbl.setProperty("class", "SectionTitle")
@@ -859,99 +1027,273 @@ class WaveLabApp(QMainWindow):
 
         self.dynamic_tags = {}
         self.dynamic_units = {}
+        self.dynamic_p1 = {}  # SpinBox paramètre 1
+        self.dynamic_p2 = {}  # SpinBox paramètre 2
+        self.dynamic_lbl_p1 = {}  # Label du paramètre 1 (nom physique)
+        self.dynamic_lbl_p2 = {}  # Label du paramètre 2 (nom physique)
+        self.dynamic_cols = {}  # nom de colonne CSV
+        self.dynamic_combos = {}  # combo type par ligne (pour save_calibrated_file)
+        self.calib_fichier_source = None
 
     def simulate_file_import(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Importer un fichier d'acquisition", "",
-                                                   "Fichiers CSV (*.csv);;Tous les fichiers (*)")
+
+        file_name, _ = QFileDialog.getOpenFileName(self, "Importer un fichier d'acquisition",
+                                                   "", "Fichiers CSV (*.csv);;Tous les fichiers (*)")
         if file_name:
-            self.btn_dropzone.hide()
-            self.lbl_filename.setText(os.path.basename(file_name))
-            self.lbl_fileinfo.setText("24 000 lignes · 4 colonnes · chargé")
-            self.banner_file.show()
-            self.populate_calibration_table(["Ch1", "Ch2", "Ch3", "Ch4"])
-            self.calib_container.show()
+            try:
+                import pandas as pd
+                df = pd.read_csv(file_name)
+                # On exclut la colonne temps(s) — ce sont les colonnes de données
+                colonnes_data = [c for c in df.columns if c != "temps(s)"]
+                nb_lignes = len(df)
+                nb_cols = len(colonnes_data)
+
+                self.calib_fichier_source = file_name
+                self.btn_dropzone.hide()
+                self.lbl_filename.setText(os.path.basename(file_name))
+                self.lbl_fileinfo.setText(f"{nb_lignes:,} lignes · {nb_cols} colonnes de données".replace(",", " "))
+                self.banner_file.show()
+                self.populate_calibration_table(colonnes_data)
+                self.calib_container.show()
+
+            except Exception as e:
+                QMessageBox.critical(self, "Erreur", f"Impossible de lire le fichier :\n{e}")
 
     def populate_calibration_table(self, colonnes):
+        from PyQt6.QtWidgets import QDoubleSpinBox
+
+        # Nettoyage des lignes précédentes
         for i in reversed(range(self.rows_layout.count())):
-            widget = self.rows_layout.itemAt(i).widget()
-            if widget is not None: widget.deleteLater()
+            w = self.rows_layout.itemAt(i).widget()
+            if w: w.deleteLater()
 
         self.dynamic_tags.clear()
         self.dynamic_units.clear()
-        types_capteurs = ["Pression", "Accélération", "Température", "Débit", "Brut"]
+        self.dynamic_p1.clear()
+        self.dynamic_p2.clear()
+        self.dynamic_lbl_p1.clear()
+        self.dynamic_lbl_p2.clear()
+        self.dynamic_cols.clear()
+        self.dynamic_combos.clear()
 
         for row_index, voie in enumerate(colonnes):
+            self.dynamic_cols[row_index] = voie
+            cfg = CAPTEURS_CONFIG["Pression"]  # config par défaut
+
             row_widget = QWidget()
             row_grid = QGridLayout(row_widget)
-            row_grid.setContentsMargins(0, 0, 0, 0)
+            row_grid.setContentsMargins(0, 5, 0, 5)
+            row_grid.setSpacing(10)
 
-            lbl_voie = QLabel(voie.split('/')[-1])
+            # ── Col 0 : Nom de voie ──────────────────────────────
+            lbl_voie = QLabel(voie.split('/')[-1].split('(')[0])
             lbl_voie.setStyleSheet("font-weight: bold; font-size: 12px;")
             row_grid.addWidget(lbl_voie, 0, 0)
 
-            type_layout = QVBoxLayout()
+            # ── Col 1 : Type + badge ─────────────────────────────
             combo_type = QComboBox()
-            combo_type.addItems(types_capteurs)
-
+            combo_type.addItems(list(CAPTEURS_CONFIG.keys()))
             lbl_tag = QLabel("pression")
             lbl_tag.setProperty("class", "TagPression")
             lbl_tag.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl_tag.setFixedWidth(70)
-
+            lbl_tag.setFixedWidth(80)
+            type_layout = QVBoxLayout()
             type_layout.addWidget(combo_type)
             type_layout.addWidget(lbl_tag)
             row_grid.addLayout(type_layout, 0, 1)
 
-            lbl_unite = QLabel("Pa")
+            # ── Col 2 : Unité résultat ───────────────────────────
+            lbl_unite = QLabel(cfg["unite"])
             lbl_unite.setStyleSheet("font-family: monospace; color: #4b5563;")
             row_grid.addWidget(lbl_unite, 0, 2)
 
-            lbl_valeur = QLabel("0.0")
-            lbl_valeur.setStyleSheet("color: #185FA5; font-family: monospace;")
-            row_grid.addWidget(lbl_valeur, 0, 3)
+            # ── Col 3 : Paramètre 1 (label + spinbox) ───────────
+            lbl_p1 = QLabel(cfg["p1_label"])
+            lbl_p1.setStyleSheet("font-size: 10px; color: #6b7280;")
+            spin_p1 = QDoubleSpinBox()
+            spin_p1.setRange(-1_000_000, 1_000_000)
+            spin_p1.setDecimals(4)
+            spin_p1.setValue(cfg["p1_default"])
+            spin_p1.setProperty("class", "ParamBox")
+            layout_p1 = QVBoxLayout()
+            layout_p1.setSpacing(2)
+            layout_p1.addWidget(lbl_p1)
+            layout_p1.addWidget(spin_p1)
+            row_grid.addLayout(layout_p1, 0, 3)
 
+            # ── Col 4 : Paramètre 2 (label + spinbox) ───────────
+            lbl_p2 = QLabel(cfg["p2_label"])
+            lbl_p2.setStyleSheet("font-size: 10px; color: #6b7280;")
+            spin_p2 = QDoubleSpinBox()
+            spin_p2.setRange(-1_000_000, 1_000_000)
+            spin_p2.setDecimals(4)
+            spin_p2.setValue(cfg["p2_default"])
+            spin_p2.setProperty("class", "ParamBox")
+            layout_p2 = QVBoxLayout()
+            layout_p2.setSpacing(2)
+            layout_p2.addWidget(lbl_p2)
+            layout_p2.addWidget(spin_p2)
+            row_grid.addLayout(layout_p2, 0, 4)
+
+            # ── Col 5 : Formule affichée ─────────────────────────
+            lbl_formule = QLabel(f"y = {cfg['formule_str']}  [{cfg['unite']}]")
+            lbl_formule.setStyleSheet("color: #185FA5; font-family: monospace; font-size: 10px;")
+            row_grid.addWidget(lbl_formule, 0, 5)
+
+            # Stockage
             self.dynamic_tags[row_index] = lbl_tag
             self.dynamic_units[row_index] = lbl_unite
+            self.dynamic_p1[row_index] = spin_p1
+            self.dynamic_p2[row_index] = spin_p2
+            self.dynamic_lbl_p1[row_index] = lbl_p1
+            self.dynamic_lbl_p2[row_index] = lbl_p2
+            self.dynamic_combos[row_index] = combo_type
 
+            # Mise à jour dynamique de la formule quand p1 ou p2 change
+            def make_formule_updater(lf, idx):
+                def update():
+                    t = self.dynamic_combos[idx].currentText()
+                    cfg = CAPTEURS_CONFIG.get(t, CAPTEURS_CONFIG["Brut"])
+                    p1 = self.dynamic_p1[idx].value()
+                    p2 = self.dynamic_p2[idx].value()
+                    lf.setText(f"y = {cfg['formule_str']}  [{cfg['unite']}]"
+                               f"\n   p1={p1}  p2={p2}")
+
+                return update
+
+            updater = make_formule_updater(lbl_formule, row_index)
+            spin_p1.valueChanged.connect(lambda _, u=updater: u())
+            spin_p2.valueChanged.connect(lambda _, u=updater: u())
             combo_type.currentIndexChanged.connect(
-                lambda text, idx=row_index, cb=combo_type: self.update_row_type(idx, cb.currentText()))
+                lambda _, idx=row_index, cb=combo_type: self.update_row_type(idx, cb.currentText())
+            )
 
             combo_type.setCurrentText("Pression")
             row_grid.setColumnStretch(1, 2)
+            row_grid.setColumnStretch(5, 3)
             self.rows_layout.addWidget(row_widget)
 
     def update_row_type(self, row_index, selected_type):
+        cfg = CAPTEURS_CONFIG.get(selected_type, CAPTEURS_CONFIG["Brut"])
+
+        # ── Badge couleur ────────────────────────────────────────
+        tag_classes = {
+            "Pression": ("pression", "TagPression"),
+            "Force": ("force", "TagAccel"),
+            "Accélération": ("accél.", "TagAccel"),
+            "Vitesse": ("vitesse", "TagDebit"),
+            "Sonde": ("sonde", "TagTemp"),
+            "Brut": ("brut", "TagBrut"),
+        }
+        tag_txt, tag_cls = tag_classes.get(selected_type, ("brut", "TagBrut"))
         tag = self.dynamic_tags[row_index]
-        unite = self.dynamic_units[row_index]
-
-        if selected_type == "Pression":
-            tag.setText("pression")
-            tag.setProperty("class", "TagPression")
-            unite.setText("Pa")
-        elif selected_type == "Accélération":
-            tag.setText("accél.")
-            tag.setProperty("class", "TagAccel")
-            unite.setText("m/s²")
-        elif selected_type == "Température":
-            tag.setText("temp.")
-            tag.setProperty("class", "TagTemp")
-            unite.setText("°C")
-        elif selected_type == "Débit":
-            tag.setText("débit")
-            tag.setProperty("class", "TagDebit")
-            unite.setText("L/min")
-        else:
-            tag.setText("brut")
-            tag.setProperty("class", "TagBrut")
-            unite.setText("V")
-
+        tag.setText(tag_txt)
+        tag.setProperty("class", tag_cls)
         tag.style().unpolish(tag)
         tag.style().polish(tag)
 
+        # ── Unité résultat ───────────────────────────────────────
+        self.dynamic_units[row_index].setText(cfg["unite"])
+
+        # ── Labels des paramètres ────────────────────────────────
+        self.dynamic_lbl_p1[row_index].setText(cfg["p1_label"])
+        self.dynamic_lbl_p2[row_index].setText(cfg["p2_label"])
+
+        # ── Valeurs par défaut ───────────────────────────────────
+        self.dynamic_p1[row_index].setValue(cfg["p1_default"])
+        self.dynamic_p2[row_index].setValue(cfg["p2_default"])
+
     def save_calibrated_file(self):
-        file_name, _ = QFileDialog.getSaveFileName(self, "Enregistrer fichier calibré", "", "Fichiers CSV (*.csv)")
-        if file_name:
-            QMessageBox.information(self, "Succès", "Fichier calibré enregistré avec succès.")
+        if not self.calib_fichier_source:
+            QMessageBox.warning(self, "Attention", "Aucun fichier source chargé.")
+            return
+
+        file_name, _ = QFileDialog.getSaveFileName(
+            self, "Enregistrer fichier calibré",
+            "donnees_calibrees.csv", "Fichiers CSV (*.csv)"
+        )
+        if not file_name:
+            return
+
+        try:
+            import pandas as pd
+            df = pd.read_csv(self.calib_fichier_source)
+            colonnes_data = [c for c in df.columns if c != "temps(s)"]
+
+            # Construction des dicts gain et offset pour calibrate()
+            gain_dict = {}
+            offset_dict = {}
+            renommage = {}  # ancien nom → nouveau nom avec unité
+
+            for row_index, col in enumerate(colonnes_data):
+                if row_index not in self.dynamic_combos:
+                    continue
+
+                type_capteur = self.dynamic_combos[row_index].currentText()
+                cfg = CAPTEURS_CONFIG.get(type_capteur, CAPTEURS_CONFIG["Brut"])
+                p1 = self.dynamic_p1[row_index].value()
+                p2 = self.dynamic_p2[row_index].value()
+                unite = cfg["unite"]
+
+                # Conversion des paramètres physiques (p1, p2) en gain/offset
+                # pour que calibrate() puisse faire simplement g*x + b
+                # Chaque formule est ramenée à la forme y = g*x + b :
+                #
+                # Pression    : PE*(V-Vref)/(10-Vref) = [PE/(10-Vref)]*V + [-PE*Vref/(10-Vref)]
+                # Force       : CN*V/(S/1000*10)      = [CN/(S/1000*10)]*V + 0
+                # Accélération: (V-Vbias)*1000/S*9.81 = [1000*9.81/S]*V + [-Vbias*1000*9.81/S]
+                # Vitesse     : (V-V0)/(S/1000)       = [1000/S]*V + [-V0*1000/S]
+                # Sonde       : Gain*V + T0            = Gain*V + T0
+                # Brut        : a*V + b                = a*V + b
+
+                if type_capteur == "Pression":
+                    denom = (10.0 - p2) if (10.0 - p2) != 0 else 1.0
+                    g = p1 / denom
+                    b = -p1 * p2 / denom
+
+                elif type_capteur == "Force":
+                    denom = (p2 / 1000.0) * 10.0 if p2 != 0 else 1.0
+                    g = p1 / denom
+                    b = 0.0
+
+                elif type_capteur == "Accélération":
+                    facteur = (1000.0 * 9.81 / p1) if p1 != 0 else 1.0
+                    g = facteur
+                    b = -p2 * facteur
+
+                elif type_capteur == "Vitesse":
+                    denom = p1 / 1000.0 if p1 != 0 else 1.0
+                    g = 1.0 / denom
+                    b = -p2 / denom
+
+                elif type_capteur == "Sonde":
+                    g = p1
+                    b = p2
+
+                else:  # Brut
+                    g = p1
+                    b = p2
+
+                gain_dict[col] = g
+                offset_dict[col] = b
+                renommage[col] = f"{col.split('(')[0]}({unite})"
+
+            # Appel de la fonction calibrate() des chercheurs
+            df_calibre = self.calibrate(df, gain_dict, offset_dict)
+
+            # Renommage des colonnes avec la bonne unité
+            df_calibre.rename(columns=renommage, inplace=True)
+
+            df_calibre.to_csv(file_name, index=False, float_format="%.6f")
+
+            QMessageBox.information(
+                self, "Calibration réussie",
+                f"Fichier calibré enregistré :\n{file_name}\n\n"
+                f"{len(df_calibre):,} points · {len(colonnes_data)} voies calibrées".replace(",", " ")
+            )
+
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", f"Échec de la calibration :\n{e}")
 
     # ==========================================
     # CONSTRUCTION: PAGE "VISUALISATION"
@@ -1032,15 +1374,25 @@ class WaveLabApp(QMainWindow):
     def load_visu_data(self, time_array, channels_dict, metrics_dict):
         self.visu_current_data = channels_dict
 
+        # ── Métriques ────────────────────────────────────────────
         self.lbl_metric_hs.setText(
-            f"<span style='font-size: 18px; font-weight: bold; font-family: monospace;'>{metrics_dict.get('HS', '0')}</span> <span style='font-size: 11px; color: #6b7280;'>m</span>")
+            f"<span style='font-size: 18px; font-weight: bold; font-family: monospace;'>"
+            f"{metrics_dict.get('HS', '0')}</span> "
+            f"<span style='font-size: 11px; color: #6b7280;'></span>")
         self.lbl_metric_tp.setText(
-            f"<span style='font-size: 18px; font-weight: bold; font-family: monospace;'>{metrics_dict.get('TP', '0')}</span> <span style='font-size: 11px; color: #6b7280;'>s</span>")
+            f"<span style='font-size: 18px; font-weight: bold; font-family: monospace;'>"
+            f"{metrics_dict.get('TP', '0')}</span> "
+            f"<span style='font-size: 11px; color: #6b7280;'>s</span>")
         self.lbl_metric_hmax.setText(
-            f"<span style='font-size: 18px; font-weight: bold; font-family: monospace;'>{metrics_dict.get('HMAX', '0')}</span> <span style='font-size: 11px; color: #6b7280;'>m</span>")
+            f"<span style='font-size: 18px; font-weight: bold; font-family: monospace;'>"
+            f"{metrics_dict.get('HMAX', '0')}</span> "
+            f"<span style='font-size: 11px; color: #6b7280;'></span>")
         self.lbl_metric_duree.setText(
-            f"<span style='font-size: 18px; font-weight: bold; font-family: monospace;'>{metrics_dict.get('DUREE', '0')}</span> <span style='font-size: 11px; color: #6b7280;'>s</span>")
+            f"<span style='font-size: 18px; font-weight: bold; font-family: monospace;'>"
+            f"{metrics_dict.get('DUREE', '0')}</span> "
+            f"<span style='font-size: 11px; color: #6b7280;'>s</span>")
 
+        # ── Combo voies ──────────────────────────────────────────
         self.combo_visu_voies.blockSignals(True)
         self.combo_visu_voies.clear()
         self.combo_visu_voies.addItem("Toutes les voies")
@@ -1048,13 +1400,29 @@ class WaveLabApp(QMainWindow):
             self.combo_visu_voies.addItem(info.get('name', key))
         self.combo_visu_voies.blockSignals(False)
 
+        # ── Graphique ────────────────────────────────────────────
         self.visu_plot.clear()
         self.visu_curves.clear()
 
-        for key, info in self.visu_current_data.items():
-            name = info.get("name", key)
-            curve = self.visu_plot.plot(time_array, info["data"], pen=pg.mkPen(info.get("color", "#000000"), width=1.5),
-                                        name=name)
+        # Légende
+        self.visu_plot.addLegend(offset=(10, 10))
+
+        # Label axe X
+        self.visu_plot.setLabel('bottom', 'Temps', units='s')
+
+        # Label axe Y — unité de la première voie
+        # (si toutes les voies ont la même unité, sinon on laisse générique)
+        unites = list({info.get("unite", "V") for info in channels_dict.values()})
+        axe_y = unites[0] if len(unites) == 1 else "valeur"
+        self.visu_plot.setLabel('left', 'Amplitude', units=axe_y)
+
+        for key, info in channels_dict.items():
+            curve = self.visu_plot.plot(
+                time_array,
+                info["data"],
+                pen=pg.mkPen(info.get("color", "#000000"), width=1.5),
+                name=info.get("name", key)  # ← affiché dans la légende avec l'unité
+            )
             self.visu_curves[key] = curve
 
         self.combo_visu_voies.setCurrentIndex(0)
@@ -1067,15 +1435,78 @@ class WaveLabApp(QMainWindow):
             else:
                 curve.setVisible(False)
 
+
     def process_and_visualize(self):
+        import pandas as pd
         import numpy as np
-        temps = np.linspace(0, 10, 500)
-        donnees = {
-            "Ch1": {"data": np.sin(temps) * 0.14, "color": "#185FA5", "name": "Ch1 - Pression"},
-            "Ch2": {"data": np.cos(temps * 1.5) * 0.08, "color": "#993556", "name": "Ch2 - Accélération"}
+
+        # ── Parcourir le fichier calibré ────────────────────────
+        file_name, _ = QFileDialog.getOpenFileName(
+            self, "Ouvrir fichier calibré", "",
+            "Fichiers CSV (*.csv)"
+        )
+        if not file_name:
+            return
+
+        try:
+            df = pd.read_csv(file_name)
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", f"Impossible de lire le fichier :\n{e}")
+            return
+
+        if "temps(s)" not in df.columns:
+            QMessageBox.critical(self, "Erreur",
+                                 "Colonne 'temps(s)' introuvable — ce n'est pas un fichier WaveLab.")
+            return
+
+        time_array = df["temps(s)"].values
+        colonnes_data = [c for c in df.columns if c != "temps(s)"]
+
+        if not colonnes_data:
+            QMessageBox.warning(self, "Attention", "Aucune colonne de données trouvée.")
+            return
+
+        # ── Couleurs par voie ────────────────────────────────────
+        couleurs = ['#185FA5', '#993556', '#854F0B',
+                    '#3B6D11', '#5B3256', '#212121',
+                    '#0E7C7B', '#C84B31']
+
+        # ── Construction du dict channels pour load_visu_data ───
+        # Format attendu : {key: {"data": array, "color": hex, "name": str, "unite": str}}
+        channels_dict = {}
+        for i, col in enumerate(colonnes_data):
+            # Extraction de l'unité depuis le nom de colonne
+            # ex: "ai0(bar)" → nom="ai0", unite="bar"
+            if "(" in col and col.endswith(")"):
+                nom_voie = col.split("(")[0]
+                unite = col.split("(")[1].rstrip(")")
+            else:
+                nom_voie = col
+                unite = "V"
+
+            channels_dict[f"ch{i}"] = {
+                "data": df[col].values,
+                "color": couleurs[i % len(couleurs)],
+                "name": f"{nom_voie} [{unite}]",
+                "unite": unite
+            }
+
+        # ── Métriques globales ───────────────────────────────────
+        duree = round(float(time_array[-1] - time_array[0]), 2)
+        # Max absolu toutes voies confondues
+        val_max = max(abs(df[c]).max() for c in colonnes_data)
+        # Valeur RMS de la première voie
+        rms = round(float(np.sqrt(np.mean(df[colonnes_data[0]].values ** 2))), 4)
+
+        metriques = {
+            "HS": round(val_max, 4),
+            "TP": round(duree / len(colonnes_data), 3),
+            "HMAX": round(float(max(df[c].max() for c in colonnes_data)), 4),
+            "DUREE": duree
         }
-        metriques = {"HS": "0.142", "TP": "1.84", "HMAX": "0.241", "DUREE": "10"}
-        self.load_visu_data(temps, donnees, metriques)
+
+        # ── Chargement et navigation ─────────────────────────────
+        self.load_visu_data(time_array, channels_dict, metriques)
         self.switch_page(4)
 
     def basculer_vers_calibration(self):
@@ -1084,12 +1515,22 @@ class WaveLabApp(QMainWindow):
         else:
             voies_a_calibrer = ["Ch1", "Ch2"]
 
+        chemin = os.path.join(
+            self.gestionnaire.parametres.get("dossier_sortie", "."),
+            self.gestionnaire.parametres.get("nom_fichier", "donnees.csv")
+        )
+        self.calib_fichier_source = chemin if os.path.exists(chemin) else None
         self.btn_dropzone.hide()
         self.lbl_filename.setText(self.gestionnaire.parametres.get("nom_fichier", "donnees.csv"))
 
         freq = self.spin_freq.value()
-        temps = self.donnees_x_plot[-1] if hasattr(self, 'donnees_x_plot') and self.donnees_x_plot else 0
+
+        temps = 0
+        if hasattr(self, 'donnees_x_plot') and self.donnees_x_plot and self.donnees_x_plot[0]:
+            temps = self.donnees_x_plot[0][-1]
+
         pts = int(temps * freq)
+
         self.lbl_fileinfo.setText(f"{pts} lignes · {len(voies_a_calibrer)} colonnes · Données directes")
         self.banner_file.show()
 
@@ -1097,40 +1538,67 @@ class WaveLabApp(QMainWindow):
         self.calib_container.show()
         self.switch_page(3)
 
+    def closeEvent(self, event):
+        self.gestionnaire.mcc.liberer()
+        super().closeEvent(event)
+
+    def calibrate(self,df, gain, offset):
+        result = df.copy()
+        for col in df.columns:
+            g = gain.get(col, 1.0)
+            b = offset.get(col, 0.0)
+            result[col] = g * df[col] + b
+        return result
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
-class ScanThread(QThread):
-    # Signal émis dès qu'un boîtier est confirmé → affichage immédiat dans la grille
-    boitier_trouve  = pyqtSignal(dict)
-    # Signal émis à la fin avec (succès global, message d'erreur éventuel)
-    scan_termine    = pyqtSignal(bool, str)
 
-    # 🎯 MODIFICATION ICI : On ajoute un paramètre optionnel ips_manuelles
-    def __init__(self, gestionnaire, ips_manuelles=None):
+class ScanThread(QThread):
+    # Signal émis dès qu'un boîtier est confirmé
+    boitier_trouve = pyqtSignal(dict)
+    # Signal émis à la fin avec (succès global, message d'erreur éventuel)
+    scan_termine = pyqtSignal(bool, str)
+
+    # AJOUT DES PARAMÈTRES : scan_ni et scan_kistler
+    def __init__(self, gestionnaire, scan_ni=True, scan_kistler=False,
+                 scan_mcc=False, mode_simulation_mcc=False,  # ← ajouter
+                 ips_manuelles=None):
         super().__init__()
         self.gestionnaire = gestionnaire
+        self.scan_ni = scan_ni
+        self.scan_kistler = scan_kistler
         self.ips_manuelles = ips_manuelles
+        self.scan_mcc = scan_mcc  # ← ajouter
+        self.mode_simulation_mcc = mode_simulation_mcc
+
 
     def run(self):
         if hasattr(self.gestionnaire, '_on_boitier_detecte'):
             self.gestionnaire._on_boitier_detecte = lambda info: self.boitier_trouve.emit(info)
 
+        erreur_message = ""
         try:
-            # 🎯 MODIFICATION ICI : Si l'utilisateur a écrit des IPs, on appelle la méthode manuelle
-            if self.ips_manuelles:
-                succes = self.gestionnaire.initialiser_systeme_manuel(self.ips_manuelles)
-            else:
-                succes = self.gestionnaire.initialiser_systeme()
-
-            # Émet aussi les boîtiers trouvés
-            for info in getattr(self.gestionnaire, 'boitiers_detectes', []):
-                self.boitier_trouve.emit(info)
-            self.scan_termine.emit(succes, "")
-        except BoitierIntrouvableError as e:
-            self.scan_termine.emit(False, str(e))
+            succes = self.gestionnaire.initialiser_systeme(
+                scan_ni=self.scan_ni,
+                scan_kistler=self.scan_kistler,
+                scan_mcc=self.scan_mcc,
+                mode_simulation_mcc=self.mode_simulation_mcc,
+                ips_manuelles=self.ips_manuelles
+            )
         except Exception as e:
-            self.scan_termine.emit(False, f"Une erreur imprévue est survenue :\n{e}")
+            erreur_message = str(e)
+            succes = False
+
+        # Toujours émettre les boîtiers trouvés, même en cas d'erreur partielle
+        for info in getattr(self.gestionnaire, 'boitiers_detectes', []):
+            self.boitier_trouve.emit(info)
+
+        # Récupère l'erreur Kistler stockée si elle existe
+        if not erreur_message and hasattr(self.gestionnaire, '_erreur_kistler'):
+            erreur_message = f"Kistler introuvable :\n{self.gestionnaire._erreur_kistler}"
+            del self.gestionnaire._erreur_kistler
+
+        self.scan_termine.emit(succes, erreur_message)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

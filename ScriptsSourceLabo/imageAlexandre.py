@@ -1528,7 +1528,7 @@ def traiter_dossiers_images():
     # base_path = '/Volumes/One Touch/DRACCARV1/'  # À modifier selon votre structure
     # folders = [
 
-    # ('/Volumes/One Touch/DRACCARV1/Tests/PIV/Campagne/avec_mat/14/CAM1','/Volumes/One Touch/DRACCARV1/Tests/PIV/Campagne/avec_mat/14/CAM1/CAM1_sansdistor'),
+    # ('/Volumes/One Touch/DRACCARV1/ScriptsSourceLabo/PIV/Campagne/avec_mat/14/CAM1','/Volumes/One Touch/DRACCARV1/ScriptsSourceLabo/PIV/Campagne/avec_mat/14/CAM1/CAM1_sansdistor'),
 
     # ]
 
@@ -1639,9 +1639,9 @@ def detecter_surface_libre_et_recaler():
 
     # Chemins des dossiers d'images de surface libre
     # dossiers_surface_libre = [
-    #    '/Volumes/One Touch/DRACCARV1/Caracterisation_vagues_octobre_novembre_Mm/Tests/test_temps_attente/4/4_2/CAM1_sansdistor',
-    #   '/Volumes/One Touch/DRACCARV1/Caracterisation_vagues_octobre_novembre_Mm/Tests/test_differents_xf/146/CAM1_sansdistor',
-    #  '/Volumes/One Touch/DRACCARV1/Caracterisation_vagues_octobre_novembre_Mm/Tests/test_particules/CAM1_sansdistor'
+    #    '/Volumes/One Touch/DRACCARV1/Caracterisation_vagues_octobre_novembre_Mm/ScriptsSourceLabo/test_temps_attente/4/4_2/CAM1_sansdistor',
+    #   '/Volumes/One Touch/DRACCARV1/Caracterisation_vagues_octobre_novembre_Mm/ScriptsSourceLabo/test_differents_xf/146/CAM1_sansdistor',
+    #  '/Volumes/One Touch/DRACCARV1/Caracterisation_vagues_octobre_novembre_Mm/ScriptsSourceLabo/test_particules/CAM1_sansdistor'
     # ]
 
     # Nom du fichier image à utiliser pour la détection
@@ -1979,7 +1979,7 @@ def detecter_surface_libre_et_recaler():
 
         if reponse in ['oui', 'o', 'y', 'yes']:
             # Générer un nom de fichier avec indication du recalage
-            base_path = '/Volumes/One Touch/DRACCARV2/Tests/Marée Moyenne 0,700m/Période 1,6s/Amplitude 0.21m/Sans mât/Mire/CAM1/'
+            base_path = '/Volumes/One Touch/DRACCARV2/ScriptsSourceLabo/Marée Moyenne 0,700m/Période 1,6s/Amplitude 0.21m/Sans mât/Mire/CAM1/'
             nom_base = os.path.splitext(os.path.basename(image_path))[0]
             fichier_sortie = os.path.join(base_path, f"{nom_base}_coordonnees_recallees_y{hauteur_cm:+.4f}cm.txt")
 
@@ -2017,7 +2017,7 @@ def detecter_surface_libre_et_recaler():
 if __name__ == "__main__":
 
     # Chemin de base
-    base_path = '/Volumes/One Touch/DRACCARV2/Tests/Marée Moyenne 0,700m/Période 1,6s/Amplitude 0.21m/Sans mât/Mire/CAM1/'
+    base_path = '/Volumes/One Touch/DRACCARV2/ScriptsSourceLabo/Marée Moyenne 0,700m/Période 1,6s/Amplitude 0.21m/Sans mât/Mire/CAM1/'
     image_path = os.path.join(base_path, 'Image_cam1_000000.tif')
 
     nom_base = os.path.splitext(os.path.basename(image_path))[0]
