@@ -319,6 +319,37 @@ class GestionnaireKistler(GestionnaireAquisition):
     def sauvegarder_brut_csv(self):
         return True
 
+    def tester_connexions(self, dictionnaire_voies):
+        import socket
+        voies_en_echec = []
+
+        for boitier_nom, voies in dictionnaire_voies.items():
+            ip_boitier = None
+            if hasattr(self, 'boitiers_detectes'):
+                for b in self.boitiers_detectes:
+                    if b['nom'] == boitier_nom:
+                        ip_boitier = b.get('ip') or b.get('adresse')
+                        break
+
+            if not ip_boitier:
+                print(f"Test Kistler : IP introuvable pour {boitier_nom}")
+                for voie in voies: voies_en_echec.append((boitier_nom, voie))
+                continue
+
+            # On ping le boîtier sur le port 10001
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(1.0)  # 1 seconde max pour répondre
+                resultat = sock.connect_ex((ip_boitier, 10001))
+                sock.close()
+
+                if resultat != 0:
+                    raise Exception("Le port est fermé ou le boîtier est éteint.")
+            except Exception as e:
+                print(f"Test Kistler échoué pour {boitier_nom} : {e}")
+                for voie in voies: voies_en_echec.append((boitier_nom, voie))
+
+        return voies_en_echec
 
 # ==========================================
 # BANC DE TEST AUTONOME (SANS INTERFACE)

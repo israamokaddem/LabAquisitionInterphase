@@ -2,7 +2,8 @@ from PyQt6.QtCore import QThread, pyqtSignal
 
 
 class AcquisitionThread(QThread):
-    maj_graphique = pyqtSignal(list, list)
+    # AJOUT : Un troisième paramètre 'list' pour transmettre les numéros des courbes
+    maj_graphique = pyqtSignal(list, list, list)
     acquisition_terminee = pyqtSignal(bool)
 
     def __init__(self, gestionnaire, dico_voies):
@@ -11,10 +12,12 @@ class AcquisitionThread(QThread):
         self.dico_voies = dico_voies
         self.arret_demande = False
 
-
     def run(self):
-        def callback(temps, donnees):
-            self.maj_graphique.emit(temps, donnees)
+        # Le callback accepte maintenant les indices envoyés par le Chef d'Orchestre
+        def callback(temps, donnees, indices=None):
+            if indices is None:
+                indices = list(range(len(donnees)))
+            self.maj_graphique.emit(temps, donnees, indices)
 
         def check_arret():
             return self.arret_demande

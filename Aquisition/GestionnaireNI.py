@@ -272,13 +272,36 @@ class GestionnaireNI(GestionnaireAquisition):
 
                     writer.writerow(ligne)
 
-            print(f"✅ Sauvegarde réussie : {chemin_complet}")
+            print(f"sauvegarde réussie : {chemin_complet}")
             return True
 
         except Exception as e:
             print(f"Erreur lors de la sauvegarde : {e}")
             return False
 
+    def tester_connexions(self, dictionnaire_voies):
+        """
+        Teste si les voies sélectionnées sont réellement lisibles par le matériel.
+        Retourne une liste de tuples (boitier, voie) qui ont échoué.
+        """
+        import nidaqmx
+        from nidaqmx.constants import TaskMode
+
+        voies_en_echec = []
+
+        for boitier, voies in dictionnaire_voies.items():
+            for voie in voies:
+                try:
+                    # On crée une micro-tâche jetable pour tester
+                    with nidaqmx.Task() as task:
+                        task.ai_channels.add_ai_voltage_chan(voie)
+                        # TASK_VERIFY demande à la carte de valider la voie sans lancer la lecture
+                        task.control(TaskMode.TASK_VERIFY)
+                except Exception as e:
+                    print(f"Erreur détectée sur la voie {voie} : {e}")
+                    voies_en_echec.append((boitier, voie))
+
+        return voies_en_echec
 # ==========================================
 # EXÉCUTION DU SCRIPT DE TEST
 # ==========================================

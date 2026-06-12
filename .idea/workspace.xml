@@ -4,16 +4,24 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a8e2ff60-3c2d-47db-a1b2-8a74b47ad281" name="Changes" comment="commit Creation of graphic interface for the aquisition">
-      <change afterPath="$PROJECT_DIR$/Aquisition/AquisitionThread.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Aquisition/GestionnaireAquisition.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Aquisition/GestionnaireKistler1.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Aquisition/maquetteInterpahce.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Aquisition/simulateurKistler.py" afterDir="false" />
+    <list default="true" id="a8e2ff60-3c2d-47db-a1b2-8a74b47ad281" name="Changes" comment="commit add NI final version and working on the other aquisition cards">
+      <change afterPath="$PROJECT_DIR$/Aquisition/GestionnaireMCC.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Aquisition/GestionnairePrincipal.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Aquisition/TestBugFinder/GestionnaireKistler_FINAL.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Aquisition/TestBugFinder/maquetteInterpahce.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/projectConfig/INSTALLATION.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/projectConfig/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/projectConfig/verifier_installation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Aquisition/AquisitionThread.py" beforeDir="false" afterPath="$PROJECT_DIR$/Aquisition/AquisitionThread.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Aquisition/GestionnaireKistler1.py" beforeDir="false" afterPath="$PROJECT_DIR$/Aquisition/GestionnaireKistler.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Aquisition/GestionnaireNI.py" beforeDir="false" afterPath="$PROJECT_DIR$/Aquisition/GestionnaireNI.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Aquisition/InterfaceAquisition.py" beforeDir="false" afterPath="$PROJECT_DIR$/Aquisition/InterfaceAquisition.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Aquisition/maquetteInterpahce.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Aquisition/testNI.py" beforeDir="false" afterPath="$PROJECT_DIR$/Aquisition/testNI.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tests/InterphaseTest.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/image.py" beforeDir="false" afterPath="$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,19 +78,29 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.GestionnaireAquisition.executor": "Run",
     "Python.GestionnaireKistler.executor": "Run",
+    "Python.GestionnaireKistler1.executor": "Run",
+    "Python.GestionnaireKistler_FINAL.executor": "Run",
+    "Python.GestionnaireKistler_v3.executor": "Run",
+    "Python.GestionnaireMCC.executor": "Run",
     "Python.GestionnaireNI.executor": "Run",
+    "Python.GestionnairePrincipal.executor": "Run",
     "Python.Imagerie.executor": "Run",
     "Python.InterfaceAquisition.executor": "Run",
     "Python.InterphaseTest.executor": "Run",
+    "Python.analyser_page_daq.executor": "Run",
     "Python.communicationTest.executor": "Run",
+    "Python.debug_duration.executor": "Run",
     "Python.decomposition.executor": "Run",
+    "Python.diagnostic_kistler.executor": "Run",
     "Python.dsp.executor": "Run",
     "Python.explore_kistler_api.executor": "Run",
     "Python.interface.executor": "Run",
     "Python.maquetteInterpahce.executor": "Run",
     "Python.simulateurKistler.executor": "Run",
     "Python.testNI.executor": "Run",
+    "Python.test_detec.executor": "Run",
     "Python.test_rapide_kistler.executor": "Run",
+    "Python.tester_api_kistler.executor": "Run",
     "Python.waveAmplitudeDecomposition.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -91,6 +109,7 @@
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "git-widget-placeholder": "IsraDev",
     "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Users/HP/PycharmProjects/Interpahse_Aquisition/projectConfig",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -101,7 +120,13 @@
   }
 }]]></component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\HP\PycharmProjects\Interpahse_Aquisition\projectConfig" />
+      <recent name="C:\Users\HP\PycharmProjects\Interpahse_Aquisition\Aquisition" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\HP\PycharmProjects\Interpahse_Aquisition\ScriptsSourceLabo" />
+      <recent name="C:\Users\HP\PycharmProjects\Interpahse_Aquisition\Aquisition\TestBugFinder" />
       <recent name="C:\Users\HP\PycharmProjects\Interpahse_Aquisition\Interpretation" />
     </key>
   </component>
@@ -144,7 +169,11 @@
       <workItem from="1780473345420" duration="10023000" />
       <workItem from="1780563804481" duration="6134000" />
       <workItem from="1780899593637" duration="4498000" />
-      <workItem from="1780910259891" duration="9952000" />
+      <workItem from="1780910259891" duration="11137000" />
+      <workItem from="1781078743647" duration="12894000" />
+      <workItem from="1781133208007" duration="3601000" />
+      <workItem from="1781168096217" duration="6286000" />
+      <workItem from="1781180418016" duration="9958000" />
     </task>
     <task id="LOCAL-00001" summary="Interphase.python:creation d'une maquette de l'interphase graphique.">
       <option name="closed" value="true" />
@@ -226,7 +255,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779947871375</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="commit add NI final version and working on the other aquisition cards">
+      <option name="closed" value="true" />
+      <created>1781022889748</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1781022889749</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -257,16 +294,12 @@
     <MESSAGE value="commit avant crash" />
     <MESSAGE value="commit Creation gestion du boitier NI sans interface" />
     <MESSAGE value="commit Creation of graphic interface for the aquisition" />
-    <option name="LAST_COMMIT_MESSAGE" value="commit Creation of graphic interface for the aquisition" />
+    <MESSAGE value="commit add NI final version and working on the other aquisition cards" />
+    <option name="LAST_COMMIT_MESSAGE" value="commit add NI final version and working on the other aquisition cards" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/main.py</url>
-          <line>8</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Interpretation/Moteur/decomposition.py</url>
           <line>93</line>
@@ -293,32 +326,32 @@
           <option name="timeStamp" value="15" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image.py</url>
+          <url>file://$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py</url>
           <line>272</line>
           <option name="timeStamp" value="16" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image.py</url>
+          <url>file://$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py</url>
           <line>735</line>
           <option name="timeStamp" value="17" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image.py</url>
+          <url>file://$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py</url>
           <line>764</line>
           <option name="timeStamp" value="18" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image.py</url>
+          <url>file://$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py</url>
           <line>1128</line>
           <option name="timeStamp" value="19" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image.py</url>
+          <url>file://$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py</url>
           <line>1129</line>
           <option name="timeStamp" value="20" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image.py</url>
+          <url>file://$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py</url>
           <line>1320</line>
           <option name="timeStamp" value="21" />
         </line-breakpoint>
@@ -328,22 +361,22 @@
           <option name="timeStamp" value="22" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image.py</url>
+          <url>file://$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py</url>
           <line>815</line>
           <option name="timeStamp" value="23" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image.py</url>
+          <url>file://$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py</url>
           <line>1015</line>
           <option name="timeStamp" value="24" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image.py</url>
+          <url>file://$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py</url>
           <line>1418</line>
           <option name="timeStamp" value="25" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image.py</url>
+          <url>file://$PROJECT_DIR$/ScriptsSourceLabo/imageAlexandre.py</url>
           <line>1580</line>
           <option name="timeStamp" value="26" />
         </line-breakpoint>
@@ -373,46 +406,41 @@
           <option name="timeStamp" value="32" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Aquisition/InterfaceAquisition.py</url>
-          <line>678</line>
-          <option name="timeStamp" value="34" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Aquisition/InterfaceAquisition.py</url>
-          <line>390</line>
-          <option name="timeStamp" value="35" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Aquisition/InterfaceAquisition.py</url>
-          <line>1016</line>
-          <option name="timeStamp" value="36" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Aquisition/InterfaceAquisition.py</url>
-          <line>905</line>
-          <option name="timeStamp" value="38" />
+          <url>file://$PROJECT_DIR$/Aquisition/TestBugFinder/maquetteInterpahce.py</url>
+          <line>478</line>
+          <option name="timeStamp" value="39" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/interface_py$interface.coverage" NAME="interface Coverage Results" MODIFIED="1779451252192" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation" />
+    <SUITE FILE_PATH="coverage/interface_py$analyser_page_daq.coverage" NAME="analyser_page_daq Coverage Results" MODIFIED="1781104541815" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$diagnostic_kistler.coverage" NAME="diagnostic_kistler Coverage Results" MODIFIED="1781079259276" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
     <SUITE FILE_PATH="coverage/Interpahse_Aquisition$decomposition.coverage" NAME="decomposition Coverage Results" MODIFIED="1776675377791" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
+    <SUITE FILE_PATH="coverage/interface_py$GestionnaireKistler1.coverage" NAME="GestionnaireKistler1 Coverage Results" MODIFIED="1781127760541" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$debug_duration.coverage" NAME="debug_duration Coverage Results" MODIFIED="1781103208585" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
     <SUITE FILE_PATH="coverage/Interpahse_Aquisition$waveAmplitudeDecomposition.coverage" NAME="waveAmplitudeDecomposition Coverage Results" MODIFIED="1776401759374" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="D:/HP" />
     <SUITE FILE_PATH="coverage/interface_py$GestionnaireNI.coverage" NAME="GestionnaireNI Coverage Results" MODIFIED="1780345796229" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
-    <SUITE FILE_PATH="coverage/interface_py$Imagerie.coverage" NAME="Imagerie Coverage Results" MODIFIED="1779088397304" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
     <SUITE FILE_PATH="coverage/Interpahse_Aquisition$InterphaseTest.coverage" NAME="InterphaseTest Coverage Results" MODIFIED="1776244577824" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Tests" />
-    <SUITE FILE_PATH="coverage/interface_py$simulateurKistler.coverage" NAME="simulateurKistler Coverage Results" MODIFIED="1780349752094" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
-    <SUITE FILE_PATH="coverage/interface_py$GestionnaireKistler.coverage" NAME="GestionnaireKistler Coverage Results" MODIFIED="1780923998369" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
-    <SUITE FILE_PATH="coverage/interface_py$explore_kistler_api.coverage" NAME="explore_kistler_api Coverage Results" MODIFIED="1780924980044" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="D:/HP" />
-    <SUITE FILE_PATH="coverage/interface_py$maquetteInterpahce.coverage" NAME="maquetteInterpahce Coverage Results" MODIFIED="1780926352059" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
     <SUITE FILE_PATH="coverage/interface_py$test_rapide_kistler.coverage" NAME="test_rapide_kistler Coverage Results" MODIFIED="1780924873509" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="D:/HP" />
     <SUITE FILE_PATH="coverage/interface_py$communicationTest.coverage" NAME="communicationTest Coverage Results" MODIFIED="1779197467768" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
-    <SUITE FILE_PATH="coverage/interface_py$GestionnaireAquisition.coverage" NAME="GestionnaireAquisition Coverage Results" MODIFIED="1780906366965" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
-    <SUITE FILE_PATH="coverage/interface_py$dsp.coverage" NAME="dsp Coverage Results" MODIFIED="1777277603610" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
     <SUITE FILE_PATH="coverage/interface_py$decomposition.coverage" NAME="decomposition Coverage Results" MODIFIED="1777884950724" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
-    <SUITE FILE_PATH="coverage/interface_py$testNI.coverage" NAME="testNI Coverage Results" MODIFIED="1780910461500" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$dsp.coverage" NAME="dsp Coverage Results" MODIFIED="1777277603610" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
+    <SUITE FILE_PATH="coverage/interface_py$interface.coverage" NAME="interface Coverage Results" MODIFIED="1779451252192" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation" />
+    <SUITE FILE_PATH="coverage/interface_py$GestionnairePrincipal.coverage" NAME="GestionnairePrincipal Coverage Results" MODIFIED="1781182608113" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$GestionnaireMCC.coverage" NAME="GestionnaireMCC Coverage Results" MODIFIED="1781184503544" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$tester_api_kistler.coverage" NAME="tester_api_kistler Coverage Results" MODIFIED="1781080953568" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$Imagerie.coverage" NAME="Imagerie Coverage Results" MODIFIED="1779088397304" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation/Moteur" />
+    <SUITE FILE_PATH="coverage/interface_py$GestionnaireKistler_FINAL.coverage" NAME="GestionnaireKistler_FINAL Coverage Results" MODIFIED="1781106163986" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$GestionnaireKistler.coverage" NAME="GestionnaireKistler Coverage Results" MODIFIED="1781135012367" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$simulateurKistler.coverage" NAME="simulateurKistler Coverage Results" MODIFIED="1781135880863" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$explore_kistler_api.coverage" NAME="explore_kistler_api Coverage Results" MODIFIED="1780924980044" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="D:/HP" />
+    <SUITE FILE_PATH="coverage/interface_py$test_detec.coverage" NAME="test_detec Coverage Results" MODIFIED="1781180829674" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$maquetteInterpahce.coverage" NAME="maquetteInterpahce Coverage Results" MODIFIED="1781250018054" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$GestionnaireKistler_v3.coverage" NAME="GestionnaireKistler_v3 Coverage Results" MODIFIED="1781105616077" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$GestionnaireAquisition.coverage" NAME="GestionnaireAquisition Coverage Results" MODIFIED="1780906366965" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$testNI.coverage" NAME="testNI Coverage Results" MODIFIED="1781130192856" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
     <SUITE FILE_PATH="coverage/Interpahse_Aquisition$interface.coverage" NAME="interface Coverage Results" MODIFIED="1776674684394" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Interpretation" />
-    <SUITE FILE_PATH="coverage/interface_py$InterfaceAquisition.coverage" NAME="InterfaceAquisition Coverage Results" MODIFIED="1780906386929" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
+    <SUITE FILE_PATH="coverage/interface_py$InterfaceAquisition.coverage" NAME="InterfaceAquisition Coverage Results" MODIFIED="1781250268787" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Aquisition" />
   </component>
 </project>

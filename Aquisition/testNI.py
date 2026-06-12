@@ -1,21 +1,18 @@
 import sys
 import os
-import csv
-import math
 import pyqtgraph as pg
 
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout,
                              QVBoxLayout, QPushButton, QLabel, QStackedWidget,
                              QFrame, QGridLayout, QScrollArea, QSpinBox, QProgressBar, QFileDialog, QMessageBox,
                              QComboBox, QLineEdit)
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve
 from PyQt6.QtGui import QCursor
 
 from Aquisition.AquisitionThread import AcquisitionThread
 from GestionnaireNI import GestionnaireNI
-from GestionnaireKistler import (
-    GestionnaireKistler, BoitierIntrouvableError,
-    TimeoutReseauError, ConnexionInterrompueError, KistlerError)
+from Aquisition.TestBugFinder.GestionnaireKistlerV1 import (
+    GestionnaireKistler, BoitierIntrouvableError)
 
 
 # ==========================================
